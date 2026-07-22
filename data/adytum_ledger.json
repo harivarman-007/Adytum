@@ -1,0 +1,80 @@
+{
+  "entries": [
+    {
+      "id": "entry-1784735936259",
+      "date": "2026-07-19",
+      "text": "today just as usual I got to college and attended the classes and today from 2 to 4.30 an awareness program was take place in cs hall which was in my college , it was about GATE exam ,which offers multiple things like work in government jobs(which was a really great thing) but I need to ready from now on because since I was a 3th year student ,the exam was takes place two year after ,so I need to use this two years seriously and I must need to improve and get a government job to secure my future and income",
+      "mood": "ataraxia",
+      "moodLabel": "Ataraxia (Tranquility)",
+      "color": "sage",
+      "quote": "You have power over your mind - not outside events. Realize this, and you will find strength. The soul becomes dyed with the color of its thoughts.",
+      "author": "Marcus Aurelius",
+      "themes": [
+        "just",
+        "usual",
+        "college"
+      ]
+    },
+    {
+      "id": "entry-1784400000000",
+      "date": "2026-07-15",
+      "text": "Felt a heavy ache of nostalgia today—remembering past summers by the sea. Embraced the quiet sorrow as part of the mind's tapestry.",
+      "mood": "melancholia",
+      "moodLabel": "Melancholia (Solitude)",
+      "color": "purple",
+      "quote": "What I need is not advice, nor consolation, nor a drug. I need the simple, quiet company of someone who knows what it is to sit with sorrow.",
+      "author": "Fyodor Dostoevsky",
+      "themes": [
+        "sea salt",
+        "fading twilight",
+        "quiet company"
+      ]
+    },
+    {
+      "id": "entry-1784656330537",
+      "date": "2026-07-16",
+      "text": "Peaceful evening.",
+      "mood": "ataraxia",
+      "moodLabel": "Ataraxia (Tranquility)",
+      "color": "sage",
+      "quote": "Nothing is more serene than a soul that has arrived at its own center, watching the turbulent tides of the world from a high, quiet cliff.",
+      "author": "Marcus Aurelius",
+      "themes": [
+        "calm center",
+        "high cliff",
+        "serenity"
+      ]
+    }
+  ],
+  "recaps": {
+    "2026-06": {
+      "title": "The Travertine Echoes of June",
+      "slides": [
+        {
+          "prose": "The month of June opened in quiet contemplation, like slow footsteps echoing on smooth travertine stone. You sat within the warm evening breeze, feeling the gentle passage of twilight.",
+          "themes": [
+            "travertine path",
+            "evening breeze",
+            "slow ink"
+          ]
+        },
+        {
+          "prose": "By mid-month, a sweet ache of memory arose—a longing for distant horizons. You embraced this warm nostalgia as a sanctuary of yesteryears coloring present steps.",
+          "themes": [
+            "sea salt",
+            "distant horizon",
+            "quiet companion"
+          ]
+        },
+        {
+          "prose": "As June drew to its steady close, you found a calm, centered peace—ataraxia. The storms settled into a restorative sigh carved on the columns of your mind's temple.",
+          "themes": [
+            "still temple",
+            "restorative sigh",
+            "archived hours"
+          ]
+        }
+      ]
+    }
+  }
+}

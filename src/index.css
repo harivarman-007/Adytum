@@ -1,0 +1,414 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+@variant dark (.dark &);
+
+@theme {
+  --font-serif: "Cormorant Garamond", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --font-display: "Cinzel", serif;
+
+  --color-marble-cream: #FDFBF7;
+  --color-marble-dark: #121314;
+
+  --color-bronze-light: #D4AF37;
+  --color-bronze-dark: #AA7C11;
+
+  --color-terracotta-muted: #D38B70;
+  --color-purple-muted: #9E91A6;
+  --color-sage-muted: #9BB09C;
+  --color-rose-muted: #C29B9F;
+  --color-amber-muted: #E2B27E;
+  --color-gray-muted: #9A9A9E;
+}
+
+/* Custom CSS Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-bronze-light);
+  opacity: 0.6;
+  border-radius: 3px;
+}
+
+:root {
+  --bg-painting: url("https://upload.wikimedia.org/wikipedia/commons/thumb/4/49/%22The_School_of_Athens%22_by_Raffaello_Sanzio_da_Urbino.jpg/1920px-%22The_School_of_Athens%22_by_Raffaello_Sanzio_da_Urbino.jpg");
+  --bg-color: #FDFBF7;
+  --text-color: #1C1917;
+  --text-muted-color: #44403C;
+  --radial-overlay: radial-gradient(circle, rgba(253, 251, 247, 0.35) 0%, rgba(253, 251, 247, 0.75) 100%);
+  --card-bg: rgba(253, 251, 247, 0.94);
+  --card-border: rgba(180, 140, 30, 0.45);
+  --card-shadow: 0 16px 50px rgba(47, 44, 40, 0.14);
+}
+
+html {
+  background-color: var(--bg-color);
+  background-image: var(--radial-overlay), var(--bg-painting);
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  min-height: 100vh;
+  overscroll-behavior-y: none;
+  transition: background-color 0.4s ease, color 0.4s ease, background-image 0.4s ease;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--text-color);
+  background-color: var(--bg-color);
+  background-image: var(--radial-overlay), var(--bg-painting);
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+  transition: background-color 0.4s ease, color 0.4s ease, background-image 0.4s ease;
+  overflow-x: hidden;
+  min-height: 100vh;
+  overscroll-behavior-y: none;
+}
+
+/* --- FAMOUS MASTERPIECE ARTWORK ATMOSPHERE THEMES --- */
+
+/* 1. Athenian Academy (Raphael's The School of Athens, 1511) */
+.theme-athenian {
+  --bg-color: #FDFBF7;
+  --text-color: #1C1917;
+  --text-muted-color: #44403C;
+  --card-bg: rgba(253, 251, 247, 0.94);
+  --card-border: rgba(180, 140, 30, 0.45);
+  --card-shadow: 0 16px 50px rgba(47, 44, 40, 0.14);
+  --bg-painting: url("https://upload.wikimedia.org/wikipedia/commons/thumb/4/49/%22The_School_of_Athens%22_by_Raffaello_Sanzio_da_Urbino.jpg/1920px-%22The_School_of_Athens%22_by_Raffaello_Sanzio_da_Urbino.jpg");
+  --radial-overlay: radial-gradient(circle, rgba(253, 251, 247, 0.35) 0%, rgba(253, 251, 247, 0.75) 100%);
+}
+
+.dark.theme-athenian {
+  --bg-color: #121314;
+  --text-color: #FAFAF9;
+  --text-muted-color: #E7E5E4;
+  --card-bg: rgba(20, 21, 22, 0.94);
+  --card-border: rgba(212, 175, 55, 0.5);
+  --card-shadow: 0 16px 50px rgba(0, 0, 0, 0.78);
+  --radial-overlay: radial-gradient(circle, rgba(18, 19, 20, 0.5) 0%, rgba(18, 19, 20, 0.85) 100%);
+}
+
+/* 2. Starry Night Sanctuary (Vincent van Gogh, 1889) */
+.theme-starry {
+  --bg-color: #0B0E17;
+  --text-color: #FAFAF9;
+  --text-muted-color: #E2E8F0;
+  --card-bg: rgba(11, 14, 23, 0.94);
+  --card-border: rgba(243, 208, 104, 0.55);
+  --card-shadow: 0 16px 50px rgba(4, 7, 15, 0.85);
+  --bg-painting: url("https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg/1920px-Van_Gogh_-_Starry_Night_-_Google_Art_Project.jpg");
+  --radial-overlay: radial-gradient(circle, rgba(11, 14, 23, 0.4) 0%, rgba(11, 14, 23, 0.82) 100%);
+}
+
+/* 3. Venus Sanctuary (Sandro Botticelli, 1485) */
+.theme-venus {
+  --bg-color: #1A1412;
+  --text-color: #FAFAF9;
+  --text-muted-color: #F3E8FF;
+  --card-bg: rgba(26, 20, 18, 0.94);
+  --card-border: rgba(225, 160, 140, 0.55);
+  --card-shadow: 0 16px 50px rgba(15, 10, 8, 0.85);
+  --bg-painting: url("https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Sandro_Botticelli_-_La_nascita_di_Venere_-_Google_Art_Project_-_edited.jpg/1920px-Sandro_Botticelli_-_La_nascita_di_Venere_-_Google_Art_Project_-_edited.jpg");
+  --radial-overlay: radial-gradient(circle, rgba(26, 20, 18, 0.35) 0%, rgba(26, 20, 18, 0.82) 100%);
+}
+
+/* 4. The Great Wave (Katsushika Hokusai, 1831) */
+.theme-wave {
+  --bg-color: #0A1422;
+  --text-color: #FAFAF9;
+  --text-muted-color: #E2E8F0;
+  --card-bg: rgba(10, 20, 34, 0.94);
+  --card-border: rgba(147, 197, 253, 0.55);
+  --card-shadow: 0 16px 50px rgba(4, 10, 20, 0.88);
+  --bg-painting: url("https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/Great_Wave_off_Kanagawa2.jpg/1920px-Great_Wave_off_Kanagawa2.jpg");
+  --radial-overlay: radial-gradient(circle, rgba(10, 20, 34, 0.35) 0%, rgba(10, 20, 34, 0.84) 100%);
+}
+
+/* 5. Creation of Adam (Michelangelo, 1512) */
+.theme-creation {
+  --bg-color: #1A1612;
+  --text-color: #FAFAF9;
+  --text-muted-color: #E2E8F0;
+  --card-bg: rgba(26, 22, 18, 0.94);
+  --card-border: rgba(217, 119, 6, 0.55);
+  --card-shadow: 0 16px 50px rgba(12, 8, 4, 0.88);
+  --bg-painting: url("https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Michelangelo_-_Creation_of_Adam_%28cropped%29.jpg/1920px-Michelangelo_-_Creation_of_Adam_%28cropped%29.jpg");
+  --radial-overlay: radial-gradient(circle, rgba(26, 22, 18, 0.35) 0%, rgba(26, 22, 18, 0.84) 100%);
+}
+
+/* 6. Golden Sanctuary (Gustav Klimt's The Kiss, 1908) */
+.theme-klimt {
+  --bg-color: #1A1508;
+  --text-color: #FAFAF9;
+  --text-muted-color: #FEF08A;
+  --card-bg: rgba(26, 21, 8, 0.94);
+  --card-border: rgba(234, 179, 8, 0.65);
+  --card-shadow: 0 16px 50px rgba(16, 12, 4, 0.88);
+  --bg-painting: url("https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/The_Kiss_-_Gustav_Klimt_-_Google_Cultural_Institute.jpg/1920px-The_Kiss_-_Gustav_Klimt_-_Google_Cultural_Institute.jpg");
+  --radial-overlay: radial-gradient(circle, rgba(26, 21, 8, 0.35) 0%, rgba(26, 21, 8, 0.84) 100%);
+}
+
+/* 7. Plum Garden Blossom (Utagawa Hiroshige, 1857) - Carmine Sakura & Jade */
+.theme-blossom {
+  --bg-color: #1A0E12;
+  --text-color: #FAFAF9;
+  --text-muted-color: #FECDD3;
+  --card-bg: rgba(26, 14, 18, 0.94);
+  --card-border: rgba(244, 63, 94, 0.6);
+  --card-shadow: 0 16px 50px rgba(12, 4, 6, 0.88);
+  --bg-painting: url("https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Ando_Hiroshige_-_Plum_Garden%2C_Kameido_-_Google_Art_Project.jpg/1280px-Ando_Hiroshige_-_Plum_Garden%2C_Kameido_-_Google_Art_Project.jpg");
+  --radial-overlay: radial-gradient(circle, rgba(26, 14, 18, 0.35) 0%, rgba(26, 14, 18, 0.84) 100%);
+}
+
+/* --- REFINED COMPONENT STYLES --- */
+
+/* Theme Text Helpers */
+.theme-text-primary {
+  color: var(--text-color) !important;
+}
+
+.theme-text-muted {
+  color: var(--text-muted-color) !important;
+}
+
+/* Rounded Glassmorphic & Bas-Relief Stone Card */
+.marble-card {
+  background-color: var(--card-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--card-border);
+  box-shadow: var(--card-shadow), inset 0 1px 2px rgba(255, 255, 255, 0.15), inset 0 -2px 6px rgba(0, 0, 0, 0.4);
+  border-radius: 1.25rem;
+  color: var(--text-color);
+  transition: background-color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease, transform 0.3s ease;
+}
+
+/* 3D Sculpted Bas-Relief Marble Tablet */
+.bas-relief-card {
+  position: relative;
+  background-color: var(--card-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--card-border);
+  border-radius: 1.5rem;
+  box-shadow: 
+    0 24px 60px rgba(0, 0, 0, 0.5),
+    inset 0 2px 4px rgba(255, 255, 255, 0.25),
+    inset 0 -4px 10px rgba(0, 0, 0, 0.6),
+    0 0 20px rgba(212, 175, 55, 0.15);
+}
+
+.bas-relief-card::after {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  border-radius: 1.35rem;
+  pointer-events: none;
+}
+
+/* Fluted Ionic/Doric Column Side Accents */
+.fluted-column-left {
+  border-left: 3px solid var(--card-border);
+}
+
+.fluted-column-right {
+  border-right: 3px solid var(--card-border);
+}
+
+/* Papyrus Scroll Wooden Roller Caps */
+.scroll-roller-top {
+  position: relative;
+  height: 14px;
+  width: 100%;
+  background: linear-gradient(180deg, #4A2E14 0%, #8B5E34 40%, #D4AF37 50%, #8B5E34 60%, #2E1C0C 100%);
+  border-radius: 8px 8px 0 0;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6), inset 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+.scroll-roller-bottom {
+  position: relative;
+  height: 14px;
+  width: 100%;
+  background: linear-gradient(180deg, #2E1C0C 0%, #8B5E34 40%, #D4AF37 50%, #8B5E34 60%, #4A2E14 100%);
+  border-radius: 0 0 8px 8px;
+  box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.6), inset 0 -1px 2px rgba(255, 255, 255, 0.3);
+}
+
+/* Ink Bloom Effect Keyframes */
+@keyframes ink-bloom {
+  0% {
+    box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 20px 8px rgba(212, 175, 55, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(212, 175, 55, 0);
+  }
+}
+
+.ink-bloom-active {
+  animation: ink-bloom 1.2s ease-out;
+}
+
+/* Classical Corner Meander frame with rounded outer edges */
+.greek-frame {
+  position: relative;
+  border-radius: 1.25rem;
+}
+
+.greek-frame::before {
+  content: "";
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  right: 5px;
+  bottom: 5px;
+  border: 1px solid var(--card-border);
+  border-radius: 1rem;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* Elegant greek key / meander line separator style */
+.greek-border {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='M0 0h16v16H0z' fill='none'/%3E%3Cpath d='M0 8h6V2h4v8H4V4h4v2H6V6h2v4h4V2h4' stroke='%23D4AF37' stroke-width='0.75' fill='none' stroke-linecap='square'/%3E%3C/svg%3E");
+  background-repeat: repeat-x;
+  height: 16px;
+  opacity: 0.5;
+}
+
+/* Column Fluting visual accent */
+.column-fluting {
+  display: none;
+}
+
+/* Elegant Drop Cap */
+.dropcap::first-letter {
+  font-family: var(--font-display);
+  font-size: 3.5rem;
+  line-height: 2.9rem;
+  padding-top: 4px;
+  padding-right: 10px;
+  padding-left: 3px;
+  float: left;
+  color: var(--color-bronze-light);
+  font-weight: 600;
+}
+
+/* Custom classical parchment physical paper grain effect overlay */
+.parchment-grain {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  opacity: 0.035;
+  pointer-events: none;
+  z-index: 100;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 250 250' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* Warm gilded gold reflection for headings */
+@keyframes gilded-shine {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.gilded-text {
+  background: linear-gradient(135deg, #a07810 0%, #d4af37 35%, #fff1ba 50%, #d4af37 65%, #a07810 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gilded-shine 10s ease infinite;
+}
+
+/* 3D Perspective Card Tilt & Hover Lighting Effects */
+.perspective-container {
+  perspective: 1000px;
+}
+
+.tilt-card {
+  transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1), box-shadow 0.4s ease, border-color 0.4s ease;
+}
+
+.tilt-card:hover {
+  transform: translateY(-4px) rotateX(1.5deg) rotateY(-1deg);
+  box-shadow: 0 20px 50px rgba(212, 175, 55, 0.22);
+  border-color: rgba(212, 175, 55, 0.55);
+}
+
+/* Primary Sanctuary Rounded Button */
+.btn-sanctuary {
+  display: inline-flex;
+  items-center: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.75rem;
+  border-radius: 0.875rem;
+  border: 1px solid var(--card-border);
+  background: rgba(212, 175, 55, 0.12);
+  color: var(--text-color);
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 600;
+  transition: all 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+}
+
+.btn-sanctuary:hover {
+  transform: translateY(-2px);
+  background: rgba(212, 175, 55, 0.25);
+  border-color: rgba(212, 175, 55, 0.7);
+  box-shadow: 0 8px 24px rgba(212, 175, 55, 0.3);
+}
+
+/* Secondary Sanctuary Outline Button */
+.btn-sanctuary-outline {
+  display: inline-flex;
+  items-center: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.5rem;
+  border-radius: 0.875rem;
+  border: 1px solid var(--card-border);
+  background: rgba(212, 175, 55, 0.04);
+  color: var(--text-color);
+  font-family: var(--font-display);
+  font-size: 0.725rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.btn-sanctuary-outline:hover {
+  background: rgba(212, 175, 55, 0.14);
+  border-color: rgba(212, 175, 55, 0.6);
+  transform: translateY(-1px);
+}
