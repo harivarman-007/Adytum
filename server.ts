@@ -241,14 +241,12 @@ async function startServer() {
         return res.json(getFallbackQuote(text));
       }
 
-      // Race Gemini response with a 8-second timeout for maximum responsiveness
-      const fetchPromise = (async () => {
-        const ai = getGeminiClient();
-        const response = await ai.models.generateContent({
-          model: "gemini-2.5-flash",
-          contents: `Journal entry written on ${date || "today"}:\n\n"${text}"\n\nAnalyze the emotional tone of this text and map it to a classical Greek-inspired mood state and return a matching profound literary quote.`,
-          config: {
-            systemInstruction: `You are the quiet curator of Adytum, a sacred personal journal space.
+      const ai = getGeminiClient();
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: `Journal entry written on ${date || "today"}:\n\n"${text}"\n\nAnalyze the emotional tone of this text and map it to a classical Greek-inspired mood state and return a matching profound literary quote.`,
+        config: {
+          systemInstruction: `You are the quiet curator of Adytum, a sacred personal journal space.
 Analyze the user's journal entry.
 1. Classify the emotional state into one of the following classical Greek mood categories:
    - "ataraxia" (tranquility, peace, stillness, calm acceptance) -> Muted color code: "sage"
@@ -261,38 +259,28 @@ Analyze the user's journal entry.
 2. Find or pair this entry with an evocative, profound quote from classical literary voices (Marcus Aurelius, Dostoevsky, Sappho, Rilke, Seneca, Epictetus, Jane Austen, Emily Brontë, etc.).
 3. Select 2-3 specific theme tags.
 Return structured JSON matching the requested schema.`,
-            responseMimeType: "application/json",
-            responseSchema: {
-              type: Type.OBJECT,
-              properties: {
-                mood: { type: Type.STRING },
-                moodLabel: { type: Type.STRING },
-                color: { type: Type.STRING },
-                quote: { type: Type.STRING },
-                author: { type: Type.STRING },
-                themes: {
-                  type: Type.ARRAY,
-                  items: { type: Type.STRING }
-                }
-              },
-              required: ["mood", "moodLabel", "color", "quote", "author", "themes"]
-            }
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              mood: { type: Type.STRING },
+              moodLabel: { type: Type.STRING },
+              color: { type: Type.STRING },
+              quote: { type: Type.STRING },
+              author: { type: Type.STRING },
+              themes: {
+                type: Type.ARRAY,
+                items: { type: Type.STRING }
+              }
+            },
+            required: ["mood", "moodLabel", "color", "quote", "author", "themes"]
           }
-        });
+        }
+      });
 
-        const jsonText = response.text?.trim() || "{}";
-        return JSON.parse(jsonText);
-      })();
-
-      const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve(null), 8000));
-      const result = await Promise.race([fetchPromise, timeoutPromise]);
-
-      if (result) {
-        return res.json(result);
-      } else {
-        console.warn("Gemini API call timed out after 8s; using fallback quote.");
-        return res.json(getFallbackQuote(text));
-      }
+      const jsonText = response.text?.trim() || "{}";
+      const result = JSON.parse(jsonText);
+      return res.json(result);
     } catch (error: any) {
       console.error("Error analyzing entry, using fallback:", error);
       return res.json(getFallbackQuote(req.body.text || ""));
@@ -382,13 +370,12 @@ Write an evocative, poetic monthly recap chronicle structured as 3 distinct parc
 
       const promptText = `Previous Dialogue:\n${formattedHistory}\n\nTraveler's Real-Life Concern / Query:\n"${query}"\n\nProvide your tailored wisdom, quote, philosophical breakdown, and practical solution steps.`;
 
-      const fetchPromise = (async () => {
-        const ai = getGeminiClient();
-        const response = await ai.models.generateContent({
-          model: "gemini-2.5-flash",
-          contents: promptText,
-          config: {
-            systemInstruction: `You are a classic Greek sage in the Adytum Sanctuary (${sage}).
+      const ai = getGeminiClient();
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash",
+        contents: promptText,
+        config: {
+          systemInstruction: `You are a classic Greek sage in the Adytum Sanctuary (${sage}).
 The traveler is asking you for guidance regarding their real-world problem or situation: "${query}".
 
 Do NOT return generic or static canned text. Carefully analyze their exact problem (e.g. work stress, relationship friction, fear of failure, loneliness, career uncertainty) and generate:
@@ -399,34 +386,24 @@ Do NOT return generic or static canned text. Carefully analyze their exact probl
 5. "followUpQuestion": A gentle, probing Socratic question to deepen their inner reflection.
 
 Return structured JSON matching schema.`,
-            responseMimeType: "application/json",
-            responseSchema: {
-              type: Type.OBJECT,
-              properties: {
-                text: { type: Type.STRING },
-                citation: { type: Type.STRING },
-                meaning: { type: Type.STRING },
-                solution: { type: Type.STRING },
-                followUpQuestion: { type: Type.STRING }
-              },
-              required: ["text", "citation", "meaning", "solution"]
-            }
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              text: { type: Type.STRING },
+              citation: { type: Type.STRING },
+              meaning: { type: Type.STRING },
+              solution: { type: Type.STRING },
+              followUpQuestion: { type: Type.STRING }
+            },
+            required: ["text", "citation", "meaning", "solution"]
           }
-        });
+        }
+      });
 
-        const jsonText = response.text?.trim() || "{}";
-        return JSON.parse(jsonText);
-      })();
-
-      const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve(null), 8000));
-      const result = await Promise.race([fetchPromise, timeoutPromise]);
-
-      if (result) {
-        return res.json(result);
-      } else {
-        console.warn("Oracle API timed out after 8s; returning fallback response.");
-        return res.json(getFallbackOracleResponse(sage, query));
-      }
+      const jsonText = response.text?.trim() || "{}";
+      const result = JSON.parse(jsonText);
+      return res.json(result);
     } catch (error: any) {
       console.error("Error in oracle route:", error);
       return res.json(getFallbackOracleResponse(req.body.sage || "marcus_aurelius", req.body.query || ""));
