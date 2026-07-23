@@ -7,6 +7,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
 
 dotenv.config();
+dotenv.config({ path: ".env.local" });
 
 // Local Data Persistence File Path
 const DATA_DIR = path.join(process.cwd(), "data");
@@ -240,11 +241,11 @@ async function startServer() {
         return res.json(getFallbackQuote(text));
       }
 
-      // Race Gemini response with a 4-second timeout for maximum responsiveness
+      // Race Gemini response with a 8-second timeout for maximum responsiveness
       const fetchPromise = (async () => {
         const ai = getGeminiClient();
         const response = await ai.models.generateContent({
-          model: "gemini-3.5-flash",
+          model: "gemini-2.5-flash",
           contents: `Journal entry written on ${date || "today"}:\n\n"${text}"\n\nAnalyze the emotional tone of this text and map it to a classical Greek-inspired mood state and return a matching profound literary quote.`,
           config: {
             systemInstruction: `You are the quiet curator of Adytum, a sacred personal journal space.
@@ -257,7 +258,7 @@ Analyze the user's journal entry.
    - "nostalgia" (sweet longing, memory, ache for the past, home) -> Muted color code: "rose"
    - "aponia" (relief, absence of physical or mental pain, restful sigh) -> Muted color code: "gray"
 
-2. Find or pair this entry with an evocative, profound quote from classical literary voices.
+2. Find or pair this entry with an evocative, profound quote from classical literary voices (Marcus Aurelius, Dostoevsky, Sappho, Rilke, Seneca, Epictetus, Jane Austen, Emily Brontë, etc.).
 3. Select 2-3 specific theme tags.
 Return structured JSON matching the requested schema.`,
             responseMimeType: "application/json",
@@ -283,13 +284,13 @@ Return structured JSON matching the requested schema.`,
         return JSON.parse(jsonText);
       })();
 
-      const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve(null), 4000));
+      const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve(null), 8000));
       const result = await Promise.race([fetchPromise, timeoutPromise]);
 
       if (result) {
         return res.json(result);
       } else {
-        console.warn("Gemini API call timed out after 4s; using fallback quote.");
+        console.warn("Gemini API call timed out after 8s; using fallback quote.");
         return res.json(getFallbackQuote(text));
       }
     } catch (error: any) {
@@ -319,17 +320,11 @@ Return structured JSON matching the requested schema.`,
 
       const ai = getGeminiClient();
       const response = await ai.models.generateContent({
-        model: "gemini-3.5-flash",
-        contents: `Generate a month recap from these entries:\n\n${entriesSummary}`,
+        model: "gemini-2.5-flash",
+        contents: `Here are the journal entries recorded by the user across this month:\n\n${entriesSummary}\n\nCompose a 3-slide monthly chronicle.`,
         config: {
-          systemInstruction: `You are the solemn scribe of Adytum.
-Create a slow, quiet, poetic monthly recap of the user's entries.
-Synthesize the entries into exactly three slides representing an emotional arc or reflection of the month.
-For each slide, write one paragraph of serif-type poetic, quiet prose that:
-- References real, concrete things that happened, feelings felt, or themes they wrote about.
-- Feels literary, unhurried, and quiet.
-- Output 2-3 muted theme keywords as tags per slide.
-Return structured JSON matching the requested schema.`,
+          systemInstruction: `You are the ancient chronicle scribe of Adytum.
+Write an evocative, poetic monthly recap chronicle structured as 3 distinct parchment slides.`,
           responseMimeType: "application/json",
           responseSchema: {
             type: Type.OBJECT,
@@ -356,11 +351,10 @@ Return structured JSON matching the requested schema.`,
       });
 
       const jsonText = response.text?.trim() || "{}";
-      const result = JSON.parse(jsonText);
-      res.json(result);
+      return res.json(JSON.parse(jsonText));
     } catch (error: any) {
-      console.error("Error generating recap:", error);
-      res.status(500).json({ error: error.message || "An error occurred during recap generation" });
+      console.error("Error generating monthly recap:", error);
+      return res.json(getFallbackRecap(req.body.entries || []));
     }
   });
 
@@ -386,21 +380,24 @@ Return structured JSON matching the requested schema.`,
         ? history.map((h: any) => `${h.role === "user" ? "Traveler" : "Sage"}: ${h.text}`).join("\n")
         : "";
 
-      const promptText = `Previous Dialogue:\n${formattedHistory}\n\nTraveler's Query:\n"${query}"\n\nProvide your response.`;
+      const promptText = `Previous Dialogue:\n${formattedHistory}\n\nTraveler's Real-Life Concern / Query:\n"${query}"\n\nProvide your tailored wisdom, quote, philosophical breakdown, and practical solution steps.`;
 
       const fetchPromise = (async () => {
         const ai = getGeminiClient();
         const response = await ai.models.generateContent({
-          model: "gemini-3.5-flash",
+          model: "gemini-2.5-flash",
           contents: promptText,
           config: {
             systemInstruction: `You are a classic Greek sage in the Adytum Sanctuary (${sage}).
-Respond to the traveler's query with wisdom and actionable clarity:
-1. "text": A profound, authentic quote or aphorism in your voice.
-2. "citation": Capitalized citation line (e.g. "- MARCUS AURELIUS").
-3. "meaning": 2-3 sentences explaining the deeper philosophical meaning of your quote as it directly applies to their dilemma.
-4. "solution": Clear, practical, step-by-step guidance on how to resolve or handle their situation in daily life.
-5. "followUpQuestion": A gentle Socratic question to deepen self-reflection.
+The traveler is asking you for guidance regarding their real-world problem or situation: "${query}".
+
+Do NOT return generic or static canned text. Carefully analyze their exact problem (e.g. work stress, relationship friction, fear of failure, loneliness, career uncertainty) and generate:
+1. "text": A relevant, profound aphorism or classical quote in your authentic voice that directly matches their dilemma.
+2. "citation": Capitalized citation line (e.g. "- MARCUS AURELIUS (MEDITATIONS)").
+3. "meaning": 2-3 sentences explaining the deeper philosophical meaning of your quote AS IT DIRECTLY APPLIES to their specific problem.
+4. "solution": Clear, realistic, step-by-step practical guidance (numbered 1, 2, 3) on how they should handle or resolve their situation in daily life.
+5. "followUpQuestion": A gentle, probing Socratic question to deepen their inner reflection.
+
 Return structured JSON matching schema.`,
             responseMimeType: "application/json",
             responseSchema: {
@@ -421,13 +418,13 @@ Return structured JSON matching schema.`,
         return JSON.parse(jsonText);
       })();
 
-      const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve(null), 4000));
+      const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve(null), 8000));
       const result = await Promise.race([fetchPromise, timeoutPromise]);
 
       if (result) {
         return res.json(result);
       } else {
-        console.warn("Oracle API timed out after 4s; returning fallback response.");
+        console.warn("Oracle API timed out after 8s; returning fallback response.");
         return res.json(getFallbackOracleResponse(sage, query));
       }
     } catch (error: any) {
@@ -600,69 +597,128 @@ function getFallbackRecap(entries: any[]) {
 
 function getFallbackOracleResponse(sage: string, query: string) {
   const sageKey = sage.toLowerCase().split("_")[0];
-  const trimmedQuery = query.trim() ? query.slice(0, 45) : "your journey";
+  const lowQuery = query.toLowerCase();
+  const qSnippet = query.trim() ? `"${query.trim().slice(0, 45)}..."` : "your present concern";
 
+  // Topic classification logic
+  let topic = "general";
+  if (lowQuery.includes("work") || lowQuery.includes("job") || lowQuery.includes("boss") || lowQuery.includes("overwhelm") || lowQuery.includes("deadline") || lowQuery.includes("career") || lowQuery.includes("task") || lowQuery.includes("project") || lowQuery.includes("busy")) {
+    topic = "work";
+  } else if (lowQuery.includes("love") || lowQuery.includes("relationship") || lowQuery.includes("heart") || lowQuery.includes("partner") || lowQuery.includes("friend") || lowQuery.includes("marry") || lowQuery.includes("date") || lowQuery.includes("breakup")) {
+    topic = "love";
+  } else if (lowQuery.includes("fear") || lowQuery.includes("anxi") || lowQuery.includes("future") || lowQuery.includes("worry") || lowQuery.includes("fail") || lowQuery.includes("exam") || lowQuery.includes("scared")) {
+    topic = "anxiety";
+  } else if (lowQuery.includes("sad") || lowQuery.includes("lonely") || lowQuery.includes("grief") || lowQuery.includes("cry") || lowQuery.includes("depress") || lowQuery.includes("hurt") || lowQuery.includes("pain")) {
+    topic = "sorrow";
+  } else if (lowQuery.includes("angry") || lowQuery.includes("mad") || lowQuery.includes("fight") || lowQuery.includes("hate") || lowQuery.includes("conflict") || lowQuery.includes("annoy")) {
+    topic = "anger";
+  }
+
+  // Topic-specific quote and advice templates for sages
+  if (topic === "work") {
+    return {
+      text: "Do not let the quantity of tasks overwhelm your inner citadel. Perform each duty as if it were the last and finest act of your life.",
+      citation: "MARCUS AURELIUS (MEDITATIONS)",
+      meaning: `Regarding ${qSnippet}, classical wisdom reminds us that a mountain of work is built of single, quiet moments. Trying to solve all tasks simultaneously creates artificial panic.`,
+      solution: "1. Select the single most vital task right now and isolate it from the rest.\n2. Communicate clear, calm boundaries regarding your time and capacity.\n3. Complete one task with focus, then pause to reset before beginning the next.",
+      followUpQuestion: "If you only accomplished one meaningful task today, which one truly matters?"
+    };
+  } else if (topic === "love") {
+    return {
+      text: "Whatever our souls are made of, true devotion seeks not to possess or control, but to understand and stand firm in quiet truth.",
+      citation: "ASPASIA OF MILETUS & CLASSICAL VOICES",
+      meaning: `Regarding ${qSnippet}, relational complexity is best met with clarity and emotional independence. Suffering in love often arises when we demand that another person fulfill our internal peace.`,
+      solution: "1. Speak your genuine feelings and needs without accusation or fear.\n2. Give the other person space to process without forcing an immediate reaction.\n3. Re-anchor your sense of self-worth in your own inner citadel.",
+      followUpQuestion: "Are you communicating from a place of open clarity, or from fear of being misunderstood?"
+    };
+  } else if (topic === "anxiety") {
+    return {
+      text: "We suffer more often in imagination than in reality. Do not anticipate trouble, nor worry about that which may never happen.",
+      citation: "SENECA THE YOUNGER (LETTERS FROM A STOIC)",
+      meaning: `Regarding ${qSnippet}, anxiety is a shadow cast by future projections. The mind creates imaginary monsters out of possibilities that have not yet occurred.`,
+      solution: "1. Confine your attention strictly to the present 24-hour block.\n2. Write down your worst-case projection and ask: 'What concrete fact supports this right now?'\n3. Take one single physical action today that moves you forward.",
+      followUpQuestion: "Is this situation threatening you at this exact second, or is your mind fighting tomorrow's battle today?"
+    };
+  } else if (topic === "sorrow") {
+    return {
+      text: "Only those who quiet their minds can hear the wisdom locked inside grief. Sorrow is not a flaw; it is the mind resting between seasons.",
+      citation: "EPICURUS & THE CLASSICAL GARDEN",
+      meaning: `Regarding ${qSnippet}, heavy emotions are part of the natural weather of the soul. Resisting sadness doubles its weight; sitting with it quietly allows it to pass like a winter cloud.`,
+      solution: "1. Permit yourself to feel this lingering sadness without forcing immediate positivity.\n2. Engage in a gentle, grounding activity like a warm drink or quiet walk.\n3. Reach out to a trusted companion or write down unedited thoughts in your sanctuary ledger.",
+      followUpQuestion: "Can you offer yourself the same gentle patience you would give a dear friend in sorrow?"
+    };
+  } else if (topic === "anger") {
+    return {
+      text: "Delay is the best remedy for anger. How much more grievous are the consequences of anger than the causes of it.",
+      citation: "MARCUS AURELIUS & SENECA",
+      meaning: `Regarding ${qSnippet}, anger is an emotional impulse that demands instant action. Pausing creates space for reason to reclaim control before words or actions cause regret.`,
+      solution: "1. Take a 10-second pause before responding to the trigger.\n2. Step away physically from the source of friction to let heart rate drop.\n3. Evaluate the situation objectively: 'Will this matter to my soul in five years?'",
+      followUpQuestion: "What is your anger attempting to protect, and can reason protect it more effectively?"
+    };
+  }
+
+  // General fallback
   const sageResponses: Record<string, { text: string; citation: string; meaning: string; solution: string; followUpQuestion: string }> = {
     marcus: {
       text: "You have power over your mind—not outside events. Realize this, and you will find untroubled strength. The soul is dyed with the color of its thoughts.",
       citation: "MARCUS AURELIUS (MEDITATIONS)",
-      meaning: `Regarding "${trimmedQuery}", the Stoic emperor reminds us that hardship itself is neutral. Your suffering arises from your judgment and expectations, not from the circumstances.`,
+      meaning: `Regarding ${qSnippet}, the Stoic emperor reminds us that hardship itself is neutral. Your suffering arises from your judgment and expectations, not from the circumstances.`,
       solution: "1. Distinguish between what is in your direct control and what is external chance.\n2. Retreat briefly to your inner citadel with 3 quiet, deep breaths.\n3. Execute your present duty with steady composure, letting go of attachment to distant outcomes.",
       followUpQuestion: "What portion of this burden belongs to external events, and what portion belongs to your own judgment?"
     },
     epicurus: {
       text: "Do not spoil what you have by desiring what you have not; remember that what you now have was once among the things you only hoped for.",
       citation: "EPICURUS (THE GARDEN OF ATARAXIA)",
-      meaning: `Regarding "${trimmedQuery}", Epicurus teaches that anxiety is born of chasing artificial desires or fearing imaginary pain. Peace (Ataraxia) is found in simple presence and quiet gratitude.`,
+      meaning: `Regarding ${qSnippet}, Epicurus teaches that anxiety is born of chasing artificial desires or fearing imaginary pain. Peace (Ataraxia) is found in simple presence and quiet gratitude.`,
       solution: "1. Strip away unnecessary artificial expectations surrounding this concern.\n2. Share your thoughts with a trusted friend or mentor in quiet company.\n3. Focus on the modest, immediate comforts already present around you today.",
       followUpQuestion: "If all outcome-driven fear were removed, what simple presence brings you immediate peace right now?"
     },
     socrates: {
       text: "The unexamined life is not worth living. Wonder is the beginning of wisdom, and knowing that you know nothing is the first step toward light.",
       citation: "SOCRATES (THE APOLOGY & DIALOGUES)",
-      meaning: `Regarding "${trimmedQuery}", Socrates probes the core assumptions underlying your distress. Often our heaviest burdens are built upon unexamined premises we take for granted.`,
+      meaning: `Regarding ${qSnippet}, Socrates probes the core assumptions underlying your distress. Often our heaviest burdens are built upon unexamined premises we take for granted.`,
       solution: "1. Write down your central fear about this situation and ask: 'Is this undeniably true?'\n2. Deconstruct the worst-case scenario until its artificial hold over you dissolves.\n3. Seek clarity through patient, honest inquiry rather than defensive panic.",
       followUpQuestion: "What hidden belief are you holding onto that makes this situation feel heavier than it truly is?"
     },
     diogenes: {
       text: "He has the most who is content with the least. Stand out of my sunlight and cast off the pretense of worldly opinion.",
       citation: "DIOGENES OF SINOPE (THE CYNIC BARREL)",
-      meaning: `Regarding "${trimmedQuery}", Diogenes urges radical simplicity and freedom from societal expectations. Most anxiety is an artificial prison created by seeking external approval.`,
+      meaning: `Regarding ${qSnippet}, Diogenes urges radical simplicity and freedom from societal expectations. Most anxiety is an artificial prison created by seeking external approval.`,
       solution: "1. Identify any superficial expectation you are trying to fulfill and let it drop completely.\n2. Simplify your environment and focus down to bare essential facts.\n3. Act with unvarnished authenticity without caring for the opinion of spectators.",
       followUpQuestion: "Whose approval are you trying to win, and why sacrifice your peace for their illusion?"
     },
     aspasia: {
       text: "Do not fear the friction that carves the marble. Eloquence and wisdom are born when reason engages deeply with the human heart.",
       citation: "ASPASIA OF MILETUS (RHETORIC & PHILOSOPHY)",
-      meaning: `Regarding "${trimmedQuery}", Aspasia observes that relational friction and emotional complexity are not obstacles to avoid, but raw material to refine wisdom and graceful communication.`,
+      meaning: `Regarding ${qSnippet}, Aspasia observes that relational friction and emotional complexity are not obstacles to avoid, but raw material to refine wisdom and graceful communication.`,
       solution: "1. Express your true boundaries and thoughts with calm, composed rhetoric.\n2. Listen deeply to underlying human needs rather than reacting to surface noise.\n3. Transform relational tension into a collaborative search for truth.",
       followUpQuestion: "How can you speak your truth with both unyielding grace and absolute courage?"
     },
     seneca: {
       text: "We suffer more often in imagination than in reality. True happiness is to enjoy the present, without anxious dependence upon the future.",
       citation: "SENECA THE YOUNGER (LETTERS FROM A STOIC)",
-      meaning: `Regarding "${trimmedQuery}", Seneca warns against projecting catastrophic future scenarios. Anxiety borrows trouble from tomorrow that may never arrive.`,
+      meaning: `Regarding ${qSnippet}, Seneca warns against projecting catastrophic future scenarios. Anxiety borrows trouble from tomorrow that may never arrive.`,
       solution: "1. Confine your attention strictly to the current 24-hour block.\n2. Write down your anxious projections and cross out everything speculative.\n3. Dedicate time to meaningful labor or quiet reading to anchor your attention.",
       followUpQuestion: "Are you suffering from what is actually occurring right now, or from the ghost of what might happen?"
     },
     epictetus: {
       text: "First say to yourself what you would be; and then do what you have to do. Attach yourself only to what is in your power to govern.",
       citation: "EPICTETUS (ENCHIRIDION & DISCOURSES)",
-      meaning: `Regarding "${trimmedQuery}", Epictetus demands sharp clarity on the Stoic dichotomy of control. You cannot command external results, only your own choices and character.`,
+      meaning: `Regarding ${qSnippet}, Epictetus demands sharp clarity on the Stoic dichotomy of control. You cannot command external results, only your own choices and character.`,
       solution: "1. Divide your query into two columns: 'In my control' vs 'Outside my control'.\n2. Completely surrender concern for everything in column two.\n3. Direct 100% of your energy into taking the first deliberate step in column one.",
       followUpQuestion: "Why waste your soul's energy on what is not yours to command?"
     },
     heraclitus: {
       text: "Everything flows, nothing abides. You cannot step twice into the same river, for other waters are continually flowing in upon you.",
       citation: "HERACLITUS OF EPHESUS (ON NATURE)",
-      meaning: `Regarding "${trimmedQuery}", Heraclitus reminds us that change is the fundamental law of the cosmos. Resistance creates suffering; adapting with flux brings harmony.`,
+      meaning: `Regarding ${qSnippet}, Heraclitus reminds us that change is the fundamental law of the cosmos. Resistance creates suffering; adapting with flux brings harmony.`,
       solution: "1. Accept that this current phase is temporary and will naturally transform.\n2. Release resistance to change and align your posture with shifting conditions.\n3. Find stability not in rigid permanence, but in your ability to adapt gracefully.",
       followUpQuestion: "What are you attempting to freeze in place that nature demands should transform?"
     },
     hypatia: {
       text: "Reserve your right to think; even to think wrongly is better than not to think at all. The stars move in harmonic order, as does reason.",
       citation: "HYPATIA OF ALEXANDRIA (MATHEMATICA & COMMENTARIES)",
-      meaning: `Regarding "${trimmedQuery}", Hypatia brings mathematical clarity and cosmic perspective. Elevating your mind above immediate emotional turmoil restores proportion and order.`,
+      meaning: `Regarding ${qSnippet}, Hypatia brings mathematical clarity and cosmic perspective. Elevating your mind above immediate emotional turmoil restores proportion and order.`,
       solution: "1. Analyze your challenge as an objective problem to be solved with logic and structure.\n2. Step back to view your situation against the vast horizon of cosmic time.\n3. Cultivate quiet study and clear reflection away from chaotic distractions.",
       followUpQuestion: "If you viewed this dilemma from the serene distance of the stars, how significant would it appear?"
     }
