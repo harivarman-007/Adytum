@@ -204,24 +204,32 @@ export default function App() {
     setIsDark(!isDark);
   };
 
-  // Switch to writing a fresh new entry for today or a custom date
+  // Switch to writing a fresh new entry for today or a custom date (capped at today)
   const handleBeginWriting = (customDate?: string) => {
-    const dateStr = typeof customDate === "string" && customDate.includes("-")
+    const todayStr = new Date().toISOString().split("T")[0];
+    let dateStr = typeof customDate === "string" && customDate.includes("-")
       ? customDate
-      : new Date().toISOString().split("T")[0];
+      : todayStr;
+    if (dateStr > todayStr) {
+      dateStr = todayStr;
+    }
     setActiveDate(dateStr);
     setActiveEntryText("");
     setActiveChapterSubtitle("");
     setAnalysisResult(null);
+    setLastSavedEntry(null);
     setView("write");
   };
 
-  // Start writing for a custom date or editing an existing entry
+  // Start writing for a custom date or editing an existing entry (capped at today)
   const handleSelectDay = (dateString: string, existingText?: string, existingSubtitle?: string) => {
-    setActiveDate(dateString);
+    const todayStr = new Date().toISOString().split("T")[0];
+    const dateStr = dateString > todayStr ? todayStr : dateString;
+    setActiveDate(dateStr);
     setActiveEntryText(existingText || "");
     setActiveChapterSubtitle(existingSubtitle || "");
     setAnalysisResult(null);
+    setLastSavedEntry(null);
     setView("write");
   };
 

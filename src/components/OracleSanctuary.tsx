@@ -259,7 +259,6 @@ export default function OracleSanctuary({ onBack }: OracleSanctuaryProps) {
     if (!query.trim()) return;
 
     setIsLoading(true);
-    playTempleBell();
 
     try {
       const response = await fetch("/api/consult-oracle", {
@@ -305,15 +304,6 @@ export default function OracleSanctuary({ onBack }: OracleSanctuaryProps) {
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
           <span>Exit Temple</span>
-        </button>
-
-        <button
-          onClick={() => playTempleBell()}
-          className="p-2.5 border border-bronze-light/30 rounded-xl theme-text-primary hover:text-bronze-light transition-colors marble-card shadow-md flex items-center gap-2 text-xs font-display uppercase tracking-wider"
-          title="Ring Temple Chime"
-        >
-          <Volume2 className="w-4 h-4 text-bronze-light" />
-          <span>Chime</span>
         </button>
       </header>
 
@@ -556,21 +546,12 @@ export default function OracleSanctuary({ onBack }: OracleSanctuaryProps) {
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-4 w-full mt-4 max-w-md">
+                <div className="flex justify-center w-full mt-4 max-w-md">
                   <button
                     onClick={handleReset}
-                    className="btn-sanctuary-outline py-3 text.xs"
+                    className="btn-sanctuary py-3 px-8 text-xs font-bold uppercase tracking-wider"
                   >
                     Ask another query
-                  </button>
-                  <button
-                    onClick={() => {
-                      playTempleBell();
-                    }}
-                    className="btn-sanctuary py-3 text-xs"
-                  >
-                    <Volume2 className="w-3.5 h-3.5 text-bronze-light" />
-                    <span>Ring Temple Chime</span>
                   </button>
                 </div>
 

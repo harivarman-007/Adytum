@@ -336,22 +336,14 @@ export default function LandingPage({
                 <span className="font-display text-[9px] tracking-widest uppercase text-bronze-light font-bold">
                   Acoustic Hearth
                 </span>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => playTempleBell()}
-                    className="p-2 border border-bronze-light/30 hover:border-bronze-light rounded-xl flex items-center justify-center gap-1.5 theme-text-primary text-[10px] font-display uppercase tracking-wider bg-bronze-light/10 hover:bg-bronze-light/20 transition-all"
-                  >
-                    <Bell className="w-3.5 h-3.5 text-bronze-light" />
-                    <span>Bell</span>
-                  </button>
+                <div className="flex justify-center">
                   <button
                     type="button"
                     onClick={() => playSingingBowlSound(216, 2.5)}
-                    className="p-2 border border-bronze-light/30 hover:border-bronze-light rounded-xl flex items-center justify-center gap-1.5 theme-text-primary text-[10px] font-display uppercase tracking-wider bg-bronze-light/10 hover:bg-bronze-light/20 transition-all"
+                    className="w-full p-2 border border-bronze-light/30 hover:border-bronze-light rounded-xl flex items-center justify-center gap-1.5 theme-text-primary text-[10px] font-display uppercase tracking-wider bg-bronze-light/10 hover:bg-bronze-light/20 transition-all"
                   >
                     <Volume2 className="w-3.5 h-3.5 text-bronze-light" />
-                    <span>Bowl</span>
+                    <span>Singing Bowl</span>
                   </button>
                 </div>
               </div>

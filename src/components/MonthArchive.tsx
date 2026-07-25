@@ -156,6 +156,7 @@ export default function MonthArchive({
     if (!activeMonthStr) return;
     const dayPadded = String(day).padStart(2, "0");
     const dateString = `${activeMonthStr}-${dayPadded}`;
+    const todayStr = new Date().toISOString().split("T")[0];
     const dayEntries = entries.filter((e) => e.date === dateString);
 
     if (dayEntries.length > 0) {
@@ -163,6 +164,10 @@ export default function MonthArchive({
       setSelectedChapterIndex(0);
       setSelectedEntry(dayEntries[0]);
     } else {
+      if (dateString > todayStr) {
+        alert("The future is yet unwritten. Focus your reflection on today or past days.");
+        return;
+      }
       onSelectDay(dateString, "");
     }
   };

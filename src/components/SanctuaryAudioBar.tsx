@@ -65,15 +65,6 @@ export default function SanctuaryAudioBar({
             </button>
           </div>
 
-          {/* Temple Bell Trigger */}
-          <button
-            onClick={() => playTempleBell()}
-            className="w-full py-2 px-3 border border-bronze-light/30 hover:border-bronze-light text-neutral-800 dark:text-neutral-100 text-xs font-serif italic transition-all flex items-center justify-center gap-2 bg-bronze-light/5 hover:bg-bronze-light/15 rounded-lg"
-          >
-            <Bell className="w-3.5 h-3.5 text-bronze-light" />
-            <span>Ring Temple Bell</span>
-          </button>
-
           {/* Theme Preset Selector */}
           <div className="flex flex-col gap-1.5 mt-1 border-t border-bronze-light/10 pt-2">
             <span className="font-display text-[8px] tracking-wider uppercase text-neutral-500 dark:text-neutral-400 font-semibold">
