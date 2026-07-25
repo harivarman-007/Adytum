@@ -6,18 +6,17 @@
 
 ---
 
-## ✨ Features
+## ✨ Key Features
 
-- 📜 **Inscribe Leaf (Journaling)**: Write unedited daily thoughts on tactile parchment scrolls.
-- 🖼️ **Masterpiece Art Gallery**: Choose from 7 curated high-resolution art gallery backdrops (Hiroshige, Van Gogh, Classical Temples, etc.).
-- 🏺 **Cameo Glass Badges**: 6 mood classifications (*Ataraxia*, *Melancholia*, *Catharsis*, *Enthousiasmos*, *Nostalgia*, *Aponia*) rendered in glowing cameo glass.
-- 🏛️ **Delphic Oracle Sanctuary**: Consult 9 classical sages (*Marcus Aurelius, Socrates, Epicurus, Diogenes, Aspasia, Seneca, Epictetus, Heraclitus, Hypatia*) for:
-  - Authentic Classical Aphorisms
-  - Philosophical Meaning & Analysis
-  - Step-by-Step Practical Guidance
-  - Socratic Inquiry Questions
-- 🎼 **Acoustic Hearth & Solfeggio Synth**: Built-in 432 Hz / 528 Hz ambient drone resonators, singing bowls, and temple bell chimes.
-- 🗄️ **Local Disk Persistence**: Store entries safely on disk (`data/adytum_ledger.json`) or in browser storage.
+- 🔐 **Athenian Privacy Gate**: Dedicated user authentication (`AuthScreen.tsx`) with handle sanitization (`@username`), 1-click demo accounts, and 100% private user-isolated ledgers.
+- ✍️ **Visual WYSIWYG Manuscript Editor**: Rich toolbar featuring Bold, Italic, Underline, Strikethrough, Headings (H1/H2), Blockquotes, Dividers, Indented Bullet & Numbered Lists, 4 Alignments, **5-Style Font Selector**, Font Scale (A+/A-), Clear Formatting, and **Custom Chapter Subtitles**.
+- 📖 **Multi-Chapter Daily Life Logging**: Log multiple entries per day (*Chapter I*, *Chapter II*) with timestamps, **Clean Dropdown Chapter Selector**, Up/Down step arrows, and Parchment Overlay reading.
+- 🏺 **Harmonized Jewel-Toned Emotional Analytics**: Emerald Ataraxia, Amethyst Melancholia, Gilded Eudaimonia, Terracotta Catharsis, and Sapphire Nostalgia synchronized across SVG Donut charts, progress bars, and legend dots with a deterministic string hash algorithm.
+- 🔮 **Oracular AI Analysis & Quote Pairing**: Powered by Google's Gemini API with multi-model fallback, paired classical quotes, 2-sentence reflection takeaways, and high-resolution **Parchment PDF Export**.
+- 🏛️ **Delphic Oracle Sanctuary**: Consult 9 classical sages (*Marcus Aurelius, Socrates, Epicurus, Diogenes, Aspasia, Seneca, Epictetus, Heraclitus, Hypatia*) for Socratic inquiry and guidance.
+- 🫁 **Stillness Sanctuary**: Interactive Box Breathing meditation (`BreathingSanctuary.tsx`) with visual focus rings.
+- 🖼️ **7 Masterwork Art Gallery Backdrops**: Classical Temples, Van Gogh Starry Night, Hiroshige Great Wave, Klimt Gold, Sakura Blossom, and Creation of Adam.
+- 🍃 **Dual MongoDB Atlas Cloud & Local Storage**: Cloud persistence with MongoDB Atlas (`mongoose`) and automatic local JSON file backup (`data/adytum_ledger.json`).
 
 ---
 
@@ -27,7 +26,7 @@
 - Node.js (v18+)
 - npm
 
-### Installation & Run
+### Installation & Local Run
 
 1. **Clone the repository:**
    ```bash
@@ -40,10 +39,11 @@
    npm install
    ```
 
-3. **Configure Environment Variables (Optional for AI integration):**
+3. **Configure Environment Variables:**
    Create a `.env` file in the root directory:
    ```env
    GEMINI_API_KEY=your_gemini_api_key_here
+   MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/adytum
    PORT=3000
    ```
 
@@ -56,11 +56,21 @@
 
 ---
 
+## 🌐 Deploying to Cloud (Render / Vercel)
+
+1. Connect your repository `harivarman-007/Adytum` to **Render** or **Vercel**.
+2. **Build Command**: `npm run build`
+3. **Start Command**: `npm run start`
+4. Add Environment Variables: `GEMINI_API_KEY` and `MONGODB_URI`.
+
+---
+
 ## 🛠️ Built With
 
-- **Frontend**: React, TypeScript, TailwindCSS, Framer Motion, Lucide Icons
+- **Frontend**: React 19, TypeScript, TailwindCSS, Framer Motion, Lucide Icons
 - **Backend**: Node.js, Express, Google GenAI SDK (`@google/genai`)
-- **Audio Engine**: Web Audio API (Procedural Solfeggio Resonators)
+- **Database**: MongoDB Atlas (`mongoose`) & Local JSON Ledger Backup
+- **Audio Engine**: Web Audio API (Procedural Solfeggio & Singing Bowl Resonators)
 
 ---
 
