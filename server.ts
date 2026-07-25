@@ -317,14 +317,15 @@ async function startServer() {
       const userId = newEntry.userId || req.headers.authorization?.replace("Bearer ", "");
 
       const data = await getLedgerData();
-      const existingIdx = data.entries.findIndex((e) =>
-        (userId ? e.userId === userId : !e.userId) && (e.date === newEntry.date || e.id === newEntry.id)
-      );
+      // Match strictly by unique entry ID (allowing editing existing entry by ID, or appending new chapter entries for the date)
+      const existingIdx = data.entries.findIndex((e) => e.id === newEntry.id);
 
       const entryToSave = {
         id: newEntry.id || `entry-${Date.now()}`,
         userId: userId || undefined,
         date: newEntry.date,
+        time: newEntry.time || undefined,
+        chapterTitle: newEntry.chapterTitle || undefined,
         text: newEntry.text,
         mood: newEntry.mood || "ataraxia",
         moodLabel: newEntry.moodLabel || "Ataraxia (Tranquility)",
