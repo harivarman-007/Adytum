@@ -5,6 +5,7 @@ import { existsSync } from "fs";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
+import mongoose from "mongoose";
 
 dotenv.config();
 dotenv.config({ path: ".env.local" });
@@ -12,6 +13,66 @@ dotenv.config({ path: ".env.local" });
 // Local Data Persistence File Path
 const DATA_DIR = path.join(process.cwd(), "data");
 const DATA_FILE = path.join(DATA_DIR, "adytum_ledger.json");
+
+// ==========================================
+// MONGODB SCHEMAS & MODELS (FOR CLOUD DEPLOYMENT)
+// ==========================================
+const MongoUserSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  name: { type: String, required: true },
+  username: { type: String, required: true, unique: true },
+  email: { type: String, required: true, unique: true },
+  passwordHash: { type: String, required: true },
+  philosophy: { type: String, default: "stoicism" },
+  createdAt: { type: String, default: () => new Date().toISOString() }
+});
+
+const MongoEntrySchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  userId: { type: String },
+  date: { type: String, required: true },
+  time: { type: String },
+  chapterTitle: { type: String },
+  text: { type: String, required: true },
+  mood: { type: String, default: "ataraxia" },
+  moodLabel: { type: String, default: "Ataraxia (Tranquility)" },
+  color: { type: String, default: "sage" },
+  quote: { type: String },
+  author: { type: String },
+  reflection: { type: String },
+  themes: [{ type: String }]
+});
+
+const MongoRecapSchema = new mongoose.Schema({
+  recapKey: { type: String, required: true, unique: true },
+  title: { type: String, required: true },
+  slides: [{
+    prose: { type: String, required: true },
+    themes: [{ type: String }]
+  }]
+});
+
+const UserModel = mongoose.models.User || mongoose.model("User", MongoUserSchema);
+const EntryModel = mongoose.models.Entry || mongoose.model("Entry", MongoEntrySchema);
+const RecapModel = mongoose.models.Recap || mongoose.model("Recap", MongoRecapSchema);
+
+let isMongoConnected = false;
+
+async function connectMongoDB() {
+  const uri = process.env.MONGODB_URI;
+  if (!uri) {
+    console.log("ℹ️ [Adytum Database] MONGODB_URI environment variable not set. Using local JSON ledger file storage.");
+    return;
+  }
+  try {
+    await mongoose.connect(uri);
+    isMongoConnected = true;
+    console.log("🏛️ [Adytum Cloud Database] Successfully connected to MongoDB Atlas Database!");
+  } catch (err: any) {
+    console.warn("⚠️ [Adytum Database Warning] Failed to connect to MongoDB Atlas. Falling back to local JSON file storage.", err.message || err);
+    isMongoConnected = false;
+  }
+}
 
 interface LedgerData {
   users?: Array<{
@@ -27,6 +88,8 @@ interface LedgerData {
     id: string;
     userId?: string;
     date: string;
+    time?: string;
+    chapterTitle?: string;
     text: string;
     mood: string;
     moodLabel: string;
@@ -92,8 +155,34 @@ const INITIAL_DATA: LedgerData = {
   }
 };
 
-// Helper: Read persistent ledger data from disk
+// Helper: Read persistent ledger data from MongoDB or local disk
 async function getLedgerData(): Promise<LedgerData> {
+  if (isMongoConnected && mongoose.connection.readyState === 1) {
+    try {
+      const users = await UserModel.find().select("-_id -__v").lean();
+      const entries = await EntryModel.find().select("-_id -__v").lean();
+      const recapsDocs = await RecapModel.find().select("-_id -__v").lean();
+
+      const recaps: Record<string, { title: string; slides: Array<{ prose: string; themes: string[] }> }> = {};
+      recapsDocs.forEach((doc: any) => {
+        if (doc.recapKey) {
+          recaps[doc.recapKey] = {
+            title: doc.title,
+            slides: doc.slides || []
+          };
+        }
+      });
+
+      return {
+        users: users as any,
+        entries: (entries.length > 0 ? entries : INITIAL_DATA.entries) as any,
+        recaps: Object.keys(recaps).length > 0 ? recaps : INITIAL_DATA.recaps
+      };
+    } catch (err) {
+      console.error("Error reading from MongoDB Atlas, falling back to local file:", err);
+    }
+  }
+
   try {
     if (!existsSync(DATA_DIR)) {
       await fs.mkdir(DATA_DIR, { recursive: true });
@@ -110,8 +199,30 @@ async function getLedgerData(): Promise<LedgerData> {
   }
 }
 
-// Helper: Save persistent ledger data to disk atomically
+// Helper: Save persistent ledger data to MongoDB and local disk atomically
 async function saveLedgerData(data: LedgerData): Promise<void> {
+  if (isMongoConnected && mongoose.connection.readyState === 1) {
+    try {
+      if (data.users && data.users.length > 0) {
+        for (const user of data.users) {
+          await UserModel.findOneAndUpdate({ id: user.id } as any, user as any, { upsert: true, new: true });
+        }
+      }
+      if (data.entries && data.entries.length > 0) {
+        for (const entry of data.entries) {
+          await EntryModel.findOneAndUpdate({ id: entry.id } as any, entry as any, { upsert: true, new: true });
+        }
+      }
+      if (data.recaps) {
+        for (const [key, recap] of Object.entries(data.recaps)) {
+          await RecapModel.findOneAndUpdate({ recapKey: key } as any, { recapKey: key, ...recap } as any, { upsert: true, new: true });
+        }
+      }
+    } catch (err) {
+      console.error("Error writing to MongoDB Atlas:", err);
+    }
+  }
+
   try {
     if (!existsSync(DATA_DIR)) {
       await fs.mkdir(DATA_DIR, { recursive: true });
@@ -123,6 +234,7 @@ async function saveLedgerData(data: LedgerData): Promise<void> {
 }
 
 async function startServer() {
+  await connectMongoDB();
   const app = express();
   const PORT = 3000;
 
@@ -353,6 +465,9 @@ async function startServer() {
   app.delete("/api/entries/:id", async (req, res) => {
     try {
       const { id } = req.params;
+      if (isMongoConnected && mongoose.connection.readyState === 1) {
+        await EntryModel.deleteOne({ id });
+      }
       const data = await getLedgerData();
       data.entries = data.entries.filter((e) => e.id !== id);
       await saveLedgerData(data);
