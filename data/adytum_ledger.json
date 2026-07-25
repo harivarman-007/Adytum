@@ -1,18 +1,18 @@
 {
   "entries": [
     {
-      "id": "entry-1784735936259",
+      "id": "entry-1784911911595",
       "date": "2026-07-19",
-      "text": "today just as usual I got to college and attended the classes and today from 2 to 4.30 an awareness program was take place in cs hall which was in my college , it was about GATE exam ,which offers multiple things like work in government jobs(which was a really great thing) but I need to ready from now on because since I was a 3th year student ,the exam was takes place two year after ,so I need to use this two years seriously and I must need to improve and get a government job to secure my future and income",
+      "text": "today was going smoothly and relaxed and in my college they conduct a drug awareness program in front of my college",
       "mood": "ataraxia",
-      "moodLabel": "Ataraxia (Tranquility)",
+      "moodLabel": "Ataraxia",
       "color": "sage",
-      "quote": "You have power over your mind - not outside events. Realize this, and you will find strength. The soul becomes dyed with the color of its thoughts.",
+      "quote": "External things are not the problem. It is your assessment of them. Which you have the power to change right now.",
       "author": "Marcus Aurelius",
       "themes": [
-        "just",
-        "usual",
-        "college"
+        "tranquility",
+        "perspective",
+        "mindfulness"
       ]
     },
     {
@@ -37,12 +37,90 @@
       "mood": "ataraxia",
       "moodLabel": "Ataraxia (Tranquility)",
       "color": "sage",
-      "quote": "Nothing is more serene than a soul that has arrived at its own center, watching the turbulent tides of the world from a high, quiet cliff.",
-      "author": "Marcus Aurelius",
+      "quote": "He is a wise man who does not grieve for the things which he has not, but rejoices for those which he has.",
+      "author": "Epictetus",
       "themes": [
         "calm center",
         "high cliff",
         "serenity"
+      ]
+    },
+    {
+      "id": "entry-u2",
+      "userId": "user-102",
+      "date": "2026-07-24",
+      "text": "Private thought for User B",
+      "mood": "melancholia",
+      "moodLabel": "Ataraxia (Tranquility)",
+      "color": "sage",
+      "quote": "",
+      "author": "",
+      "reflection": "",
+      "themes": [
+        "reflection"
+      ]
+    },
+    {
+      "id": "entry-u1",
+      "userId": "user-101",
+      "date": "2026-07-24",
+      "text": "Private thought for User A",
+      "mood": "ataraxia",
+      "moodLabel": "Ataraxia (Tranquility)",
+      "color": "sage",
+      "quote": "",
+      "author": "",
+      "reflection": "",
+      "themes": [
+        "reflection"
+      ]
+    },
+    {
+      "id": "entry-1784916864620",
+      "date": "2026-07-24",
+      "text": "today I feel so much anxious my classmates and at a same time it was a normal day and today our college conduct a drug awareness event in front of our college it was really good and fun and at a same time the police give awareness to all of us students ",
+      "mood": "ataraxia",
+      "moodLabel": "Ataraxia",
+      "color": "sage",
+      "quote": "You have power over your mind - not outside events. Realize this, and you will find strength.",
+      "author": "Marcus Aurelius",
+      "reflection": "",
+      "themes": [
+        "anxiety",
+        "college life",
+        "mindfulness"
+      ]
+    },
+    {
+      "id": "entry-test-1",
+      "userId": "user-1784913607270",
+      "date": "2026-07-24",
+      "text": "Recorded my thoughts today in peace.",
+      "mood": "ataraxia",
+      "moodLabel": "Ataraxia",
+      "color": "sage",
+      "quote": "Be present.",
+      "author": "Seneca",
+      "reflection": "Patience.",
+      "themes": [
+        "peace"
+      ]
+    },
+    {
+      "id": "entry-1784987037249",
+      "userId": "user-1784913607270",
+      "date": "2026-07-25",
+      "text": "today was a good day in fact it was a great since my childhood friend calls me and we spoke for 30 mins in was good and I booked ticket for my favorite movie and my country youngsters also happy  because they win there strike against the cruel education system and yeah every day is getting better day by day",
+      "mood": "enthousiasmos",
+      "moodLabel": "Enthousiasmos",
+      "color": "amber",
+      "quote": "Happiness, not in another place but this place... not for another hour but this hour.",
+      "author": "Walt Whitman",
+      "reflection": "Your entry radiates a vibrant sense of optimism, fueled by meaningful connection and shared victories. Reconnecting with childhood roots and witnessing positive societal change remind us that joy is both a deeply personal gift and a collective triumph.",
+      "themes": [
+        "connection",
+        "hope",
+        "community"
       ]
     }
   ],
@@ -76,5 +154,34 @@
         }
       ]
     }
-  }
+  },
+  "users": [
+    {
+      "id": "user-1784913310757",
+      "name": "Aurelia Vance",
+      "username": "aurelia",
+      "email": "aurelia@sanctuary.org",
+      "passwordHash": "password123",
+      "philosophy": "stoicism",
+      "createdAt": "2026-07-24T17:15:10.757Z"
+    },
+    {
+      "id": "user-1784913607270",
+      "name": "ryomen Atrides",
+      "username": "jarvis",
+      "email": "harivarman1234@gmail.com",
+      "passwordHash": "1234",
+      "philosophy": "aristotelianism",
+      "createdAt": "2026-07-24T17:20:07.270Z"
+    },
+    {
+      "id": "user-1784914661526",
+      "name": "paul atrides",
+      "username": "chani",
+      "email": "paul@gmail.com",
+      "passwordHash": "1234",
+      "philosophy": "stoicism",
+      "createdAt": "2026-07-24T17:37:41.526Z"
+    }
+  ]
 }

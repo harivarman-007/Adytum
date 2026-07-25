@@ -4,6 +4,9 @@ import { Feather, Compass, Lock, Sparkles, BookOpen, Quote, Flame, Calendar, Bel
 import { GreekTemple, LaurelWreath, GreekPillar } from "./GreekTempleSVG";
 import { playTempleBell, playSingingBowlSound } from "../lib/audioSynth";
 
+import { User } from "../types";
+import { UserCheck, LogIn, LogOut, UserPlus } from "lucide-react";
+
 interface LandingPageProps {
   onBegin: () => void;
   onGoToArchive: () => void;
@@ -11,17 +14,11 @@ interface LandingPageProps {
   onGoToBreathing: () => void;
   hasEntries: boolean;
   entriesCount?: number;
+  currentUser?: User | null;
+  onOpenLogin?: () => void;
+  onOpenSignup?: () => void;
+  onLogout?: () => void;
 }
-
-const STOIC_QUOTES = [
-  { text: "The soul is dyed with the color of its thoughts.", author: "Marcus Aurelius" },
-  { text: "Life is long if you know how to use it.", author: "Seneca" },
-  { text: "First say to yourself what you would be; and then do what you have to do.", author: "Epictetus" },
-  { text: "Everything flows, nothing abides.", author: "Heraclitus" },
-  { text: "Reserve your right to think; even to think wrongly is better than not to think.", author: "Hypatia" },
-  { text: "He who is brave is free.", author: "Seneca" },
-  { text: "Waste no more time arguing about what a good man should be. Be one.", author: "Marcus Aurelius" }
-];
 
 export default function LandingPage({
   onBegin,
@@ -29,15 +26,38 @@ export default function LandingPage({
   onGoToOracle,
   onGoToBreathing,
   hasEntries,
-  entriesCount = 0
+  entriesCount = 0,
+  currentUser,
+  onOpenLogin,
+  onOpenSignup,
+  onLogout
 }: LandingPageProps) {
-  const [quoteIdx, setQuoteIdx] = useState(0);
+  const [dailyQuote, setDailyQuote] = useState<{ text: string; author: string; reflection?: string }>({
+    text: "You have power over your mind - not outside events. Realize this, and you will find strength.",
+    author: "Marcus Aurelius"
+  });
+  const [isLoadingDailyQuote, setIsLoadingDailyQuote] = useState(false);
 
-  const nextQuote = () => {
-    setQuoteIdx((prev) => (prev + 1) % STOIC_QUOTES.length);
+  const fetchDailyQuote = async () => {
+    setIsLoadingDailyQuote(true);
+    try {
+      const res = await fetch("/api/daily-quote");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.text && data.author) {
+          setDailyQuote(data);
+        }
+      }
+    } catch (err) {
+      console.warn("Could not fetch daily AI quote:", err);
+    } finally {
+      setIsLoadingDailyQuote(false);
+    }
   };
 
-  const activeQuote = STOIC_QUOTES[quoteIdx];
+  React.useEffect(() => {
+    fetchDailyQuote();
+  }, []);
 
   return (
     <div id="landing-page" className="min-h-screen flex flex-col justify-between py-8 px-4 sm:px-6 max-w-7xl mx-auto selection:bg-bronze-light selection:text-white">
@@ -49,16 +69,33 @@ export default function LandingPage({
             Adytum
           </span>
         </div>
-        <div className="flex items-center gap-4">
-          {hasEntries && (
-            <button
-              onClick={onGoToArchive}
-              className="flex items-center gap-2 text-xs tracking-wider uppercase theme-text-muted hover:text-bronze-light transition-colors font-semibold p-2.5 rounded-xl marble-card border border-bronze-light/30 shadow-md"
-            >
-              <BookOpen className="w-4 h-4 text-bronze-light" />
-              <span>The Ledger ({entriesCount})</span>
-            </button>
-          )}
+
+        <div className="flex items-center gap-2">
+          <button
+            onClick={onGoToBreathing}
+            className="flex items-center gap-1.5 text-xs tracking-wider uppercase theme-text-muted hover:text-bronze-light transition-colors font-semibold p-2.5 rounded-xl marble-card border border-bronze-light/30 shadow-md"
+            title="Box Breathing Sanctuary"
+          >
+            <Compass className="w-4 h-4 text-bronze-light" />
+            <span className="hidden sm:inline">Stillness</span>
+          </button>
+
+          <button
+            onClick={onGoToOracle}
+            className="flex items-center gap-1.5 text-xs tracking-wider uppercase theme-text-muted hover:text-bronze-light transition-colors font-semibold p-2.5 rounded-xl marble-card border border-bronze-light/30 shadow-md"
+            title="Socratic Philosopher Dialogue"
+          >
+            <Sparkles className="w-4 h-4 text-bronze-light" />
+            <span className="hidden sm:inline">Oracle</span>
+          </button>
+
+          <button
+            onClick={onGoToArchive}
+            className="flex items-center gap-2 text-xs tracking-wider uppercase theme-text-muted hover:text-bronze-light transition-colors font-semibold p-2.5 rounded-xl marble-card border border-bronze-light/30 shadow-md"
+          >
+            <BookOpen className="w-4 h-4 text-bronze-light" />
+            <span>The Ledger ({entriesCount})</span>
+          </button>
         </div>
       </header>
 
@@ -80,17 +117,18 @@ export default function LandingPage({
                   </span>
                 </div>
                 <button
-                  onClick={nextQuote}
-                  className="p-1 text-neutral-400 hover:text-bronze-light transition-colors"
-                  title="Next Quote"
+                  onClick={fetchDailyQuote}
+                  disabled={isLoadingDailyQuote}
+                  className="p-1 text-neutral-400 hover:text-bronze-light transition-colors disabled:opacity-30"
+                  title="Generate New AI Daily Quote"
                 >
-                  <RefreshCw className="w-3.5 h-3.5" />
+                  <RefreshCw className={`w-3.5 h-3.5 ${isLoadingDailyQuote ? "animate-spin text-bronze-light" : ""}`} />
                 </button>
               </div>
 
               <AnimatePresence mode="wait">
                 <motion.div
-                  key={quoteIdx}
+                  key={dailyQuote.text}
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
@@ -98,11 +136,16 @@ export default function LandingPage({
                   className="flex flex-col gap-3 my-1"
                 >
                   <blockquote className="font-serif text-sm italic theme-text-primary leading-relaxed font-light">
-                    “{activeQuote.text}”
+                    “{dailyQuote.text}”
                   </blockquote>
                   <span className="font-display text-[10px] tracking-widest uppercase theme-text-muted text-right font-semibold">
-                    — {activeQuote.author}
+                    — {dailyQuote.author}
                   </span>
+                  {dailyQuote.reflection && (
+                    <p className="text-[11px] font-serif italic text-bronze-light/90 border-t border-bronze-light/15 pt-2 leading-relaxed">
+                      "{dailyQuote.reflection}"
+                    </p>
+                  )}
                 </motion.div>
               </AnimatePresence>
 
@@ -172,7 +215,7 @@ export default function LandingPage({
                 className="flex flex-col sm:flex-row gap-3.5 justify-center items-center w-full max-w-md"
               >
                 <button
-                  onClick={onBegin}
+                  onClick={() => onBegin()}
                   className="btn-sanctuary w-full sm:w-auto px-7 py-3.5 text-xs"
                 >
                   <Feather className="w-4 h-4 text-bronze-light" />
@@ -332,9 +375,30 @@ export default function LandingPage({
       </main>
 
       {/* 3. Footer */}
-      <footer className="border-t border-bronze-light/15 pt-4 flex justify-between items-center text-[10px] theme-text-muted font-sans tracking-wider uppercase font-medium mt-4">
-        <span>© {new Date().getFullYear()} Adytum</span>
-        <span>A silent sanctuary for the pensive mind</span>
+      <footer className="border-t border-bronze-light/15 pt-4 flex flex-wrap justify-between items-center gap-4 text-[10px] theme-text-muted font-sans tracking-wider uppercase font-medium mt-4">
+        <span>© {new Date().getFullYear()} Adytum • A silent sanctuary for the pensive mind</span>
+
+        {currentUser && (
+          <div className="flex items-center gap-4">
+            <div className="flex flex-col text-right">
+              <span className="text-xs font-bold theme-text-primary capitalize">
+                {currentUser.name}
+              </span>
+              <span className="text-[9px] font-mono text-bronze-light tracking-wider uppercase">
+                @{currentUser.username} • {currentUser.philosophy || "Stoicism"}
+              </span>
+            </div>
+
+            <button
+              onClick={onLogout}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold uppercase tracking-wider text-terracotta-muted hover:text-white border border-terracotta-muted/40 bg-terracotta-muted/10 hover:bg-terracotta-muted transition-all shadow-sm group"
+              title="Exit Sanctuary & Return to Login Gate"
+            >
+              <LogOut className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" />
+              <span>Logout Gate</span>
+            </button>
+          </div>
+        )}
       </footer>
     </div>
   );

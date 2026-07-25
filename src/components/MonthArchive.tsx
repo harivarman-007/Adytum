@@ -69,10 +69,25 @@ export default function MonthArchive({
   // Default selected month to newest month or current month (e.g. 2026-07)
   const currentMonthKey = new Date().toISOString().substring(0, 7);
 
-  // Generate selectable months list (includes months with entries, current month, and past 12 months)
+  const [selectedMonthStr, setSelectedMonthStr] = useState<string | null>(() => {
+    return months[0] || currentMonthKey;
+  });
+  const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
+  const [selectedDayEntries, setSelectedDayEntries] = useState<JournalEntry[]>([]);
+  const [selectedChapterIndex, setSelectedChapterIndex] = useState(0);
+  const [readingStoryIndex, setReadingStoryIndex] = useState(0);
+  const [selectedMoodFilter, setSelectedMoodFilter] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isStoryDoorOpen, setIsStoryDoorOpen] = useState<boolean>(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const activeMonthStr = selectedMonthStr || months[0] || currentMonthKey;
+
+  // Generate selectable months list dynamically (includes current, active, entry months, and surrounding months)
   const allSelectableMonths = Array.from(
     new Set([
       currentMonthKey,
+      activeMonthStr,
       ...months,
       ...Array.from({ length: 12 }).map((_, i) => {
         const d = new Date();
@@ -81,18 +96,6 @@ export default function MonthArchive({
       }),
     ])
   ).sort((a, b) => b.localeCompare(a));
-
-  const [selectedMonthStr, setSelectedMonthStr] = useState<string | null>(() => {
-    return months[0] || currentMonthKey;
-  });
-  const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
-  const [readingStoryIndex, setReadingStoryIndex] = useState(0);
-  const [selectedMoodFilter, setSelectedMoodFilter] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isStoryDoorOpen, setIsStoryDoorOpen] = useState<boolean>(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const activeMonthStr = selectedMonthStr || months[0] || currentMonthKey;
 
   const handleSelectMonth = (monthKey: string | null) => {
     playStoneClickSound();
@@ -106,10 +109,25 @@ export default function MonthArchive({
   const handleNavigateMonth = (direction: -1 | 1) => {
     if (!activeMonthStr) return;
     const [y, m] = activeMonthStr.split("-").map(Number);
+    // direction -1: Navigate to previous month (e.g., July -> June)
+    // direction 1:  Navigate to next month (e.g., July -> August)
     const d = new Date(y, m - 1 + direction, 1);
     const yearStr = d.getFullYear();
     const monthStr = String(d.getMonth() + 1).padStart(2, "0");
-    handleSelectMonth(`${yearStr}-${monthStr}`);
+    const newMonthKey = `${yearStr}-${monthStr}`;
+
+    handleSelectMonth(newMonthKey);
+  };
+
+  const getEntriesForDay = (day: number) => {
+    const dayPadded = String(day).padStart(2, "0");
+    const dateStr = `${activeMonthStr}-${dayPadded}`;
+    return entries.filter((e) => e.date === dateStr);
+  };
+
+  const getEntryForDay = (day: number) => {
+    const dayEntries = getEntriesForDay(day);
+    return dayEntries[0] || null;
   };
 
   const handleDayClick = (day: number) => {
@@ -117,10 +135,12 @@ export default function MonthArchive({
     if (!activeMonthStr) return;
     const dayPadded = String(day).padStart(2, "0");
     const dateString = `${activeMonthStr}-${dayPadded}`;
-    const found = entries.find((e) => e.date === dateString);
+    const dayEntries = entries.filter((e) => e.date === dateString);
 
-    if (found) {
-      setSelectedEntry(found);
+    if (dayEntries.length > 0) {
+      setSelectedDayEntries(dayEntries);
+      setSelectedChapterIndex(0);
+      setSelectedEntry(dayEntries[0]);
     } else {
       onSelectDay(dateString, "");
     }
@@ -161,12 +181,6 @@ export default function MonthArchive({
   const [year, month] = activeMonthStr ? activeMonthStr.split("-").map(Number) : [2026, 7];
   const daysInMonth = activeMonthStr ? new Date(year, month, 0).getDate() : 31;
   const firstDayIndex = activeMonthStr ? new Date(year, month - 1, 1).getDay() : 3;
-
-  const getEntryForDay = (day: number) => {
-    const dayPadded = String(day).padStart(2, "0");
-    const dateStr = `${activeMonthStr}-${dayPadded}`;
-    return entries.find((e) => e.date === dateStr);
-  };
 
   // Filter helper for days matching selected mood or search query
   const dayMatchesFilter = (day: number) => {
@@ -506,8 +520,9 @@ export default function MonthArchive({
                           {/* Month Days */}
                           {Array.from({ length: daysInMonth }).map((_, idx) => {
                             const day = idx + 1;
-                            const entry = getEntryForDay(day);
-                            const isSelected = selectedEntry && getEntryForDay(day)?.id === selectedEntry.id;
+                            const dayEntries = getEntriesForDay(day);
+                            const entry = dayEntries[0] || null;
+                            const isSelected = selectedEntry && dayEntries.some((e) => e.id === selectedEntry.id);
 
                             const hasActiveFilter = !!(selectedMoodFilter || searchTerm);
                             const matches = dayMatchesFilter(day);
@@ -530,6 +545,14 @@ export default function MonthArchive({
                                 <span className="text-xs sm:text-sm font-sans font-semibold">
                                   {day}
                                 </span>
+                                {dayEntries.length > 1 && (
+                                  <span
+                                    className="absolute -top-1 -right-1 px-1.5 py-0.5 text-[9px] font-mono font-bold bg-amber-500 text-stone-950 rounded-full shadow-md border border-stone-100/40"
+                                    title={`${dayEntries.length} Chapters Inscribed`}
+                                  >
+                                    {dayEntries.length}
+                                  </span>
+                                )}
                               </button>
                             );
                           })}
@@ -600,16 +623,32 @@ export default function MonthArchive({
                           </div>
 
                           {/* Horizontal Stacked Bar */}
-                          <div className="h-3.5 w-full flex overflow-hidden rounded bg-neutral-200/20 dark:bg-neutral-800/20 border border-neutral-300/10 my-3">
+                          <div className="h-3.5 w-full flex overflow-hidden rounded-lg bg-neutral-200/20 dark:bg-neutral-800/20 border border-bronze-light/20 my-3 shadow-inner">
                             {climate.map((item) => (
                               <div
                                 key={item.mood}
-                                style={{ width: `${item.percentage}%` }}
-                                className={`h-full border-r border-stone-100/30 ${item.mood === "ATARAXIA" ? "bg-olive-muted" :
-                                    item.mood === "MELANCHOLIA" ? "bg-terracotta-muted" :
-                                      item.mood === "CATHARSIS" ? "bg-amber-muted" :
-                                        item.mood === "ENTHOUSIASMOS" ? "bg-gold-muted" : "bg-rose-muted"
-                                  }`}
+                                style={{
+                                  width: `${item.percentage}%`,
+                                  backgroundColor: (()=>{
+                                    const k = (item.mood || "").trim().toUpperCase();
+                                    if (k.includes("ATARAXIA") || k.includes("TRANQUILITY") || k.includes("PEACE")) return "#10B981";
+                                    if (k.includes("MELANCHOLIA") || k.includes("SORROW")) return "#A855F7";
+                                    if (k.includes("CATHARSIS") || k.includes("RELEASE")) return "#F97316";
+                                    if (k.includes("ENTHOUSIASMOS") || k.includes("PASSION")) return "#F59E0B";
+                                    if (k.includes("EUDAIMONIA") || k.includes("JOY")) return "#EAB308";
+                                    if (k.includes("APATEIA") || k.includes("EQUANIMITY")) return "#06B6D4";
+                                    if (k.includes("NOSTALGIA") || k.includes("MEMORY")) return "#0EA5E9";
+                                    if (k.includes("SOLITUDE") || k.includes("QUIET")) return "#6366F1";
+                                    if (k.includes("GRATITUDE") || k.includes("THANKFUL")) return "#EC4899";
+                                    if (k.includes("AWE") || k.includes("WONDER")) return "#FF6B6B";
+                                    if (k.includes("CLARITY") || k.includes("WISDOM")) return "#3B82F6";
+                                    let hash = 0;
+                                    for (let i = 0; i < k.length; i++) hash = k.charCodeAt(i) + ((hash << 5) - hash);
+                                    const colors = ["#10B981", "#A855F7", "#F97316", "#F59E0B", "#EAB308", "#06B6D4", "#0EA5E9", "#6366F1", "#EC4899", "#FF6B6B", "#3B82F6"];
+                                    return colors[Math.abs(hash) % colors.length];
+                                  })()
+                                }}
+                                className="h-full border-r border-stone-900/20 transition-all duration-500 shadow-sm"
                                 title={`${item.mood}: ${item.percentage}%`}
                               />
                             ))}
@@ -794,6 +833,46 @@ export default function MonthArchive({
 
             {/* Main Full Parchment Document */}
             <main className="my-auto py-8 max-w-2xl w-full mx-auto">
+              
+              {/* Multi-Chapter Selector Bar */}
+              <div className="flex flex-col sm:flex-row items-center justify-between border-b border-bronze-light/20 pb-3 mb-4 gap-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-display text-[10px] tracking-widest uppercase text-bronze-light font-bold">
+                    Chapters ({selectedDayEntries.length > 0 ? selectedDayEntries.length : 1}):
+                  </span>
+                  {(selectedDayEntries.length > 0 ? selectedDayEntries : [selectedEntry]).map((ch, idx) => (
+                    <button
+                      key={ch.id}
+                      onClick={() => {
+                        playStoneClickSound();
+                        setSelectedChapterIndex(idx);
+                        setSelectedEntry(ch);
+                      }}
+                      className={`px-3 py-1 rounded-lg text-xs font-display uppercase tracking-wider transition-all border ${
+                        selectedEntry.id === ch.id
+                          ? "border-bronze-light bg-bronze-light/25 text-bronze-dark dark:text-bronze-light font-bold shadow-sm"
+                          : "border-bronze-light/20 text-neutral-400 hover:text-bronze-light hover:border-bronze-light/40"
+                      }`}
+                    >
+                      <span>{ch.chapterTitle || `Chapter ${idx + 1}`}</span>
+                      {ch.time && <span className="text-[9px] opacity-75 font-mono ml-1">({ch.time})</span>}
+                    </button>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => {
+                    onSelectDay(selectedEntry.date, "");
+                    setSelectedEntry(null);
+                  }}
+                  className="btn-sanctuary px-3 py-1.5 text-[10px] shadow-sm font-bold uppercase tracking-wider flex items-center gap-1.5"
+                  title="Inscribe an additional chapter for today"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-bronze-light" />
+                  <span>+ Inscribe Next Chapter</span>
+                </button>
+              </div>
+
               <section className="bas-relief-card greek-frame shadow-2xl p-8 sm:p-12 relative flex flex-col gap-6">
                 <div className="flex justify-between items-center border-b border-bronze-light/10 pb-4">
                   <span className="font-mono text-xs uppercase tracking-widest text-neutral-500">

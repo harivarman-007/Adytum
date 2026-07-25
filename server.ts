@@ -14,8 +14,18 @@ const DATA_DIR = path.join(process.cwd(), "data");
 const DATA_FILE = path.join(DATA_DIR, "adytum_ledger.json");
 
 interface LedgerData {
+  users?: Array<{
+    id: string;
+    name: string;
+    username: string;
+    email: string;
+    passwordHash: string;
+    philosophy?: string;
+    createdAt: string;
+  }>;
   entries: Array<{
     id: string;
+    userId?: string;
     date: string;
     text: string;
     mood: string;
@@ -23,6 +33,7 @@ interface LedgerData {
     color: string;
     quote?: string;
     author?: string;
+    reflection?: string;
     themes?: string[];
   }>;
   recaps: Record<string, {
@@ -44,8 +55,8 @@ const INITIAL_DATA: LedgerData = {
       mood: "ataraxia",
       moodLabel: "Ataraxia (Tranquility)",
       color: "sage",
-      quote: "Nothing is more serene than a soul that has arrived at its own center, watching the turbulent tides of the world from a high, quiet cliff.",
-      author: "Marcus Aurelius",
+      quote: "Freedom is the only worthy goal in life. It is won by disregarding things which lie beyond our control.",
+      author: "Epictetus",
       themes: ["travertine steps", "evening breeze", "calm center"]
     },
     {
@@ -137,15 +148,159 @@ async function startServer() {
     return aiClient;
   }
 
+  // Helper: Try models in sequence if a 429 quota rate limit is encountered
+  async function generateWithModelFallback(params: { contents: any; config: any }) {
+    const ai = getGeminiClient();
+    const models = [
+      "gemini-2.0-flash-lite-001",
+      "gemini-2.0-flash-lite",
+      "gemini-2.0-flash",
+      "gemini-3.6-flash",
+      "gemini-flash-lite-latest",
+      "gemini-flash-latest",
+      "gemini-2.5-flash"
+    ];
+
+    let lastErr: any = null;
+    for (const model of models) {
+      try {
+        const response = await ai.models.generateContent({
+          ...params,
+          model
+        });
+        return response;
+      } catch (err: any) {
+        lastErr = err;
+        const errStr = JSON.stringify(err || {});
+        const isQuota = err?.status === 429 ||
+                        errStr.includes("429") ||
+                        errStr.includes("RESOURCE_EXHAUSTED") ||
+                        errStr.includes("quota");
+        if (isQuota) {
+          console.warn(`[Quota Fallback] Model '${model}' quota reached (HTTP 429). Trying next model...`);
+          continue;
+        }
+        throw err;
+      }
+    }
+    throw lastErr;
+  }
+
+  // ==========================================
+  // 0. AUTHENTICATION & USER MANAGEMENT API
+  // ==========================================
+
+  // POST /api/auth/signup — Create a new Sanctuary account
+  app.post("/api/auth/signup", async (req, res) => {
+    try {
+      const { name, username, email, password, philosophy } = req.body;
+      if (!name || !username || !email || !password) {
+        return res.status(400).json({ error: "Name, username, email, and password are required." });
+      }
+
+      const data = await getLedgerData();
+      if (!data.users) data.users = [];
+
+      const existingEmail = data.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+      if (existingEmail) {
+        return res.status(400).json({ error: "An account with this email already exists." });
+      }
+
+      const existingUsername = data.users.find(u => u.username.toLowerCase() === username.toLowerCase());
+      if (existingUsername) {
+        return res.status(400).json({ error: "This sanctuary handle is already taken." });
+      }
+
+      const newUser = {
+        id: `user-${Date.now()}`,
+        name: name.trim(),
+        username: username.trim().toLowerCase(),
+        email: email.trim().toLowerCase(),
+        passwordHash: password, // Simplified for local project demo
+        philosophy: philosophy || "stoicism",
+        createdAt: new Date().toISOString()
+      };
+
+      data.users.push(newUser);
+      await saveLedgerData(data);
+
+      const { passwordHash, ...userPublic } = newUser;
+      return res.json({ success: true, user: userPublic, token: newUser.id });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || "Failed to create account" });
+    }
+  });
+
+  // POST /api/auth/login — Authenticate existing user
+  app.post("/api/auth/login", async (req, res) => {
+    try {
+      const { credential, password } = req.body;
+      if (!credential || !password) {
+        return res.status(400).json({ error: "Email/Username and password are required." });
+      }
+
+      const data = await getLedgerData();
+      if (!data.users) data.users = [];
+
+      const target = credential.trim().toLowerCase().replace(/^@/, "");
+      const cleanPassword = String(password).trim();
+
+      const user = data.users.find(u => {
+        const cleanEmail = u.email.trim().toLowerCase();
+        const cleanUser = u.username.trim().toLowerCase().replace(/^@/, "");
+        return cleanEmail === target || cleanUser === target;
+      });
+
+      if (!user || user.passwordHash.trim() !== cleanPassword) {
+        return res.status(401).json({ error: "Invalid sanctuary handle or password." });
+      }
+
+      const { passwordHash, ...userPublic } = user;
+      return res.json({ success: true, user: userPublic, token: user.id });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || "Failed to log in" });
+    }
+  });
+
+  // GET /api/auth/me — Fetch current authenticated user
+  app.get("/api/auth/me", async (req, res) => {
+    try {
+      const userId = req.headers.authorization?.replace("Bearer ", "");
+      if (!userId) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const data = await getLedgerData();
+      const user = data.users?.find(u => u.id === userId);
+      if (!user) {
+        return res.status(404).json({ error: "User session expired or not found" });
+      }
+
+      const { passwordHash, ...userPublic } = user;
+      return res.json(userPublic);
+    } catch (err: any) {
+      res.status(500).json({ error: err.message || "Session error" });
+    }
+  });
+
   // ==========================================
   // 1. RESTFUL DATABASE PERSISTENCE API
   // ==========================================
 
-  // GET /api/entries — Fetch all ledger entries
+  // GET /api/entries — Fetch ledger entries (strictly isolated per user)
   app.get("/api/entries", async (req, res) => {
     try {
       const data = await getLedgerData();
-      res.json(data.entries);
+      const userId = (req.query.userId as string) || req.headers.authorization?.replace("Bearer ", "");
+      if (userId) {
+        // Return ONLY entries created by this specific authenticated user
+        const userEntries = data.entries.filter(e => e.userId === userId);
+        return res.json(userEntries);
+      } else {
+        // Guest mode: return unassigned guest entries
+        const guestEntries = data.entries.filter(e => !e.userId);
+        return res.json(guestEntries);
+      }
     } catch (err: any) {
       res.status(500).json({ error: err.message || "Failed to fetch entries" });
     }
@@ -159,11 +314,16 @@ async function startServer() {
         return res.status(400).json({ error: "Date and text are required fields" });
       }
 
+      const userId = newEntry.userId || req.headers.authorization?.replace("Bearer ", "");
+
       const data = await getLedgerData();
-      const existingIdx = data.entries.findIndex((e) => e.date === newEntry.date || e.id === newEntry.id);
+      const existingIdx = data.entries.findIndex((e) =>
+        (userId ? e.userId === userId : !e.userId) && (e.date === newEntry.date || e.id === newEntry.id)
+      );
 
       const entryToSave = {
         id: newEntry.id || `entry-${Date.now()}`,
+        userId: userId || undefined,
         date: newEntry.date,
         text: newEntry.text,
         mood: newEntry.mood || "ataraxia",
@@ -171,6 +331,7 @@ async function startServer() {
         color: newEntry.color || "sage",
         quote: newEntry.quote || "",
         author: newEntry.author || "",
+        reflection: newEntry.reflection || "",
         themes: newEntry.themes || ["reflection"]
       };
 
@@ -181,7 +342,7 @@ async function startServer() {
       }
 
       await saveLedgerData(data);
-      res.json({ success: true, entry: entryToSave });
+      res.json(entryToSave);
     } catch (err: any) {
       res.status(500).json({ error: err.message || "Failed to save entry" });
     }
@@ -232,22 +393,25 @@ async function startServer() {
 
   app.post("/api/analyze-entry", async (req, res) => {
     try {
-      const { text, date } = req.body;
+      const { text, date, previousQuote, previousAuthor } = req.body;
       if (!text || typeof text !== "string") {
         return res.status(400).json({ error: "Text entry is required" });
       }
 
       if (!process.env.GEMINI_API_KEY) {
-        return res.json(getFallbackQuote(text));
+        return res.status(500).json({ error: "GEMINI_API_KEY environment variable is not configured on the server." });
       }
 
-      const ai = getGeminiClient();
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: `Journal entry written on ${date || "today"}:\n\n"${text}"\n\nAnalyze the emotional tone of this text and map it to a classical Greek-inspired mood state and return a matching profound literary quote.`,
+      const retryInstruction = previousQuote
+        ? `\n\nCRITICAL RETRY MANDATE: The user explicitly clicked RETRY because they previously received this quote by ${previousAuthor || "the author"}: "${previousQuote}". YOU ARE STRICTLY FORBIDDEN FROM RETURNING THIS QUOTE OR ANY QUOTE BY ${previousAuthor || "THAT AUTHOR"}. Select a completely DIFFERENT author (such as Seneca, Epictetus, Dostoevsky, Sappho, Rilke, Jane Austen, Emerson, Thoreau, Montaigne, Tolstoy, Camus, Whitman, or Virginia Woolf) and a TOTALLY DISTINCT quote.`
+        : "";
+
+      const response = await generateWithModelFallback({
+        contents: `Journal entry written on ${date || "today"}:\n\n"${text}"${retryInstruction}\n\nAnalyze the emotional tone of this text, map it to a classical Greek-inspired mood state, pair it with a genuinely relevant profound literary or philosophical quote, and provide a 2-sentence structured reflection.`,
         config: {
+          temperature: previousQuote ? 1.0 : 0.7,
           systemInstruction: `You are the quiet curator of Adytum, a sacred personal journal space.
-Analyze the user's journal entry.
+Analyze the user's journal entry carefully.
 1. Classify the emotional state into one of the following classical Greek mood categories:
    - "ataraxia" (tranquility, peace, stillness, calm acceptance) -> Muted color code: "sage"
    - "melancholia" (sadness, mourning, pensive solitude, heavy hearts) -> Muted color code: "purple"
@@ -256,8 +420,11 @@ Analyze the user's journal entry.
    - "nostalgia" (sweet longing, memory, ache for the past, home) -> Muted color code: "rose"
    - "aponia" (relief, absence of physical or mental pain, restful sigh) -> Muted color code: "gray"
 
-2. Find or pair this entry with an evocative, profound quote from classical literary voices (Marcus Aurelius, Dostoevsky, Sappho, Rilke, Seneca, Epictetus, Jane Austen, Emily Brontë, etc.).
-3. Select 2-3 specific theme tags.
+2. UNRESTRICTED LITERARY QUOTE PAIRING: Pair this entry with an evocative, profound quote from ANY philosopher, poet, essayist, novelist, or classical thinker across all world literature (e.g. Marcus Aurelius, Seneca, Epictetus, Dostoevsky, Sappho, Rilke, Jane Austen, Emily Brontë, Emerson, Thoreau, Montaigne, Tolstoy, Camus, Whitman, Virginia Woolf, etc.). Do NOT restrict to a fixed set of authors.
+
+3. STRUCTURED INSIGHT & REFLECTION: Write a concise 2-sentence reflection ("reflection") explaining clearly why this quote connects to the user's entry and providing a structured takeaway.
+
+4. Select 2-3 specific theme tags reflecting the core ideas in the entry.
 Return structured JSON matching the requested schema.`,
           responseMimeType: "application/json",
           responseSchema: {
@@ -268,12 +435,13 @@ Return structured JSON matching the requested schema.`,
               color: { type: Type.STRING },
               quote: { type: Type.STRING },
               author: { type: Type.STRING },
+              reflection: { type: Type.STRING },
               themes: {
                 type: Type.ARRAY,
                 items: { type: Type.STRING }
               }
             },
-            required: ["mood", "moodLabel", "color", "quote", "author", "themes"]
+            required: ["mood", "moodLabel", "color", "quote", "author", "reflection", "themes"]
           }
         }
       });
@@ -282,8 +450,45 @@ Return structured JSON matching the requested schema.`,
       const result = JSON.parse(jsonText);
       return res.json(result);
     } catch (error: any) {
-      console.error("Error analyzing entry, using fallback:", error);
-      return res.json(getFallbackQuote(req.body.text || ""));
+      console.error("Error analyzing entry with AI:", error);
+      return res.status(500).json({ error: error.message || "Failed to analyze entry with AI." });
+    }
+  });
+
+  // ==========================================
+  // 2.5 DYNAMIC DAILY WISDOM QUOTE API ROUTE
+  // ==========================================
+
+  app.get("/api/daily-quote", async (req, res) => {
+    try {
+      if (!process.env.GEMINI_API_KEY) {
+        return res.status(500).json({ error: "GEMINI_API_KEY is not configured." });
+      }
+
+      const response = await generateWithModelFallback({
+        contents: "Generate a fresh, profound, highly inspiring daily quote for reflection today from world philosophy or literature.",
+        config: {
+          temperature: 0.95,
+          systemInstruction: `You are the curator of Adytum's Daily Wisdom.
+Generate a unique, profound, and highly relatable quote from any philosopher, poet, thinker, or author across world literature. Do NOT repeat generic quotes. Include author and a 1-sentence reflection on how to apply it today.`,
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              text: { type: Type.STRING },
+              author: { type: Type.STRING },
+              reflection: { type: Type.STRING }
+            },
+            required: ["text", "author", "reflection"]
+          }
+        }
+      });
+
+      const jsonText = response.text?.trim() || "{}";
+      return res.json(JSON.parse(jsonText));
+    } catch (error: any) {
+      console.error("Error generating daily quote:", error);
+      return res.status(500).json({ error: error.message || "Failed to generate daily quote." });
     }
   });
 
@@ -306,9 +511,7 @@ Return structured JSON matching the requested schema.`,
         return `Entry #${idx + 1} (${e.date}) [Mood: ${e.mood}]: "${e.text}" (Paired Quote by ${e.author}: "${e.quote}")`;
       }).join("\n\n");
 
-      const ai = getGeminiClient();
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
+      const response = await generateWithModelFallback({
         contents: `Here are the journal entries recorded by the user across this month:\n\n${entriesSummary}\n\nCompose a 3-slide monthly chronicle.`,
         config: {
           systemInstruction: `You are the ancient chronicle scribe of Adytum.
@@ -370,9 +573,7 @@ Write an evocative, poetic monthly recap chronicle structured as 3 distinct parc
 
       const promptText = `Previous Dialogue:\n${formattedHistory}\n\nTraveler's Real-Life Concern / Query:\n"${query}"\n\nProvide your tailored wisdom, quote, philosophical breakdown, and practical solution steps.`;
 
-      const ai = getGeminiClient();
-      const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash",
+      const response = await generateWithModelFallback({
         contents: promptText,
         config: {
           systemInstruction: `You are a classic Greek sage in the Adytum Sanctuary (${sage}).
@@ -489,68 +690,7 @@ Return structured JSON matching schema.`,
   });
 }
 
-// Enhanced instant offline quote engine with dynamic keyword parsing
-function getFallbackQuote(text: string) {
-  const low = text.toLowerCase();
 
-  const extractTags = (fallbackDefault: string[]) => {
-    const words = text
-      .replace(/[^a-zA-Z\s]/g, "")
-      .split(/\s+/)
-      .filter((w) => w.length > 3 && !["this", "that", "with", "have", "from", "today", "watched"].includes(w.toLowerCase()));
-    if (words.length >= 2) {
-      return Array.from(new Set(words.slice(0, 3).map((w) => w.toLowerCase())));
-    }
-    return fallbackDefault;
-  };
-
-  if (low.includes("love") || low.includes("bewitched") || low.includes("pride") || low.includes("heart") || low.includes("soul") || low.includes("romantic")) {
-    return {
-      mood: "enthousiasmos",
-      moodLabel: "Enthousiasmos (Devotion & Inspiration)",
-      color: "amber",
-      quote: "Whatever our souls are made of, his and mine are the same... if all else perished, and he remained, I should still continue to be.",
-      author: "Emily Brontë (Wuthering Heights)",
-      themes: extractTags(["bewitched soul", "enduring affection", "deep devotion"])
-    };
-  } else if (low.includes("sad") || low.includes("cry") || low.includes("lonely") || low.includes("grief") || low.includes("tired")) {
-    return {
-      mood: "melancholia",
-      moodLabel: "Melancholia (Solitude)",
-      color: "purple",
-      quote: "What I need is not advice, nor consolation. I need the simple, quiet company of someone who knows what it is to sit with sorrow.",
-      author: "Fyodor Dostoevsky",
-      themes: extractTags(["heavy heart", "shadows", "silence"])
-    };
-  } else if (low.includes("angry") || low.includes("stressed") || low.includes("storm")) {
-    return {
-      mood: "catharsis",
-      moodLabel: "Catharsis (Release)",
-      color: "terracotta",
-      quote: "There is a sacredness in tears. They are not the mark of weakness, but of power. They speak more eloquently than ten thousand tongues.",
-      author: "Washington Irving",
-      themes: extractTags(["stormy wind", "release", "cleansing"])
-    };
-  } else if (low.includes("happy") || low.includes("excited") || low.includes("joy") || low.includes("sun")) {
-    return {
-      mood: "enthousiasmos",
-      moodLabel: "Enthousiasmos (Inspiration)",
-      color: "amber",
-      quote: "Believe in a love that is being stored up for you like an inheritance, and have faith that in this love there is a strength so large.",
-      author: "Rainer Maria Rilke",
-      themes: extractTags(["morning light", "open horizons", "vitality"])
-    };
-  } else {
-    return {
-      mood: "ataraxia",
-      moodLabel: "Ataraxia (Tranquility)",
-      color: "sage",
-      quote: "You have power over your mind - not outside events. Realize this, and you will find strength. The soul becomes dyed with the color of its thoughts.",
-      author: "Marcus Aurelius",
-      themes: extractTags(["still waters", "cool marble", "gentle breeze"])
-    };
-  }
-}
 
 function getFallbackRecap(entries: any[]) {
   return {

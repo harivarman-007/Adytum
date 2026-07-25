@@ -412,3 +412,63 @@ body {
   border-color: rgba(212, 175, 55, 0.6);
   transform: translateY(-1px);
 }
+
+/* Visual Manuscript contentEditable placeholder & rich typography styling */
+[contenteditable]:empty:before {
+  content: attr(data-placeholder);
+  color: rgba(160, 160, 160, 0.6);
+  font-style: italic;
+  pointer-events: none;
+  display: block;
+}
+
+/* Enable visual bullet dots & numbered lists inside contenteditable manuscript */
+[contenteditable] ul {
+  list-style-type: disc !important;
+  padding-left: 1.75rem !important;
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+[contenteditable] ol {
+  list-style-type: decimal !important;
+  padding-left: 1.75rem !important;
+  margin-top: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+[contenteditable] li {
+  margin-bottom: 0.25rem !important;
+  display: list-item !important;
+}
+
+[contenteditable] h1 {
+  font-size: 1.75rem !important;
+  font-weight: 700 !important;
+  margin-top: 0.75rem !important;
+  margin-bottom: 0.5rem !important;
+  color: #d4af37 !important;
+}
+
+[contenteditable] h2 {
+  font-size: 1.35rem !important;
+  font-weight: 600 !important;
+  margin-top: 0.6rem !important;
+  margin-bottom: 0.35rem !important;
+}
+
+[contenteditable] blockquote {
+  border-left: 3px solid #b8860b !important;
+  padding-left: 1rem !important;
+  margin-top: 0.75rem !important;
+  margin-bottom: 0.75rem !important;
+  font-style: italic !important;
+  opacity: 0.9;
+}
+
+[contenteditable] hr {
+  border: none !important;
+  border-top: 1px solid rgba(212, 175, 55, 0.4) !important;
+  margin-top: 1.25rem !important;
+  margin-bottom: 1.25rem !important;
+}

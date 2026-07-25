@@ -32,33 +32,39 @@ export default function MoodWheel({ climate, selectedMoodFilter, onSelectMoodFil
   let currentAngleOffset = 0;
 
   const getMoodColorHex = (moodKey: string) => {
-    const k = (moodKey || "").toUpperCase();
-    switch (k) {
-      case "ATARAXIA":
-        return "#708238"; // Rich Olive Green
-      case "MELANCHOLIA":
-        return "#A0522D"; // Rich Terracotta / Sienna
-      case "CATHARSIS":
-        return "#D97706"; // Amber Gold
-      case "ENTHOUSIASMOS":
-        return "#D4AF37"; // Gilded Gold
-      case "NOSTALGIA":
-        return "#B91C1C"; // Crimson Rose
-      default:
-        return "#8B5CF6";
+    const k = (moodKey || "").trim().toUpperCase();
+    if (k.includes("ATARAXIA") || k.includes("TRANQUILITY") || k.includes("PEACE")) return "#10B981"; // Emerald Green
+    if (k.includes("MELANCHOLIA") || k.includes("SORROW")) return "#A855F7"; // Royal Amethyst Purple
+    if (k.includes("CATHARSIS") || k.includes("RELEASE")) return "#F97316"; // Terracotta Orange
+    if (k.includes("ENTHOUSIASMOS") || k.includes("PASSION")) return "#F59E0B"; // Gilded Gold
+    if (k.includes("EUDAIMONIA") || k.includes("JOY")) return "#EAB308"; // Sunflower Yellow
+    if (k.includes("APATEIA") || k.includes("EQUANIMITY")) return "#06B6D4"; // Cyan Sky
+    if (k.includes("NOSTALGIA") || k.includes("MEMORY")) return "#0EA5E9"; // Sapphire Azure
+    if (k.includes("SOLITUDE") || k.includes("QUIET")) return "#6366F1"; // Indigo Slate
+    if (k.includes("GRATITUDE") || k.includes("THANKFUL")) return "#EC4899"; // Dawn Rose
+    if (k.includes("AWE") || k.includes("WONDER")) return "#FF6B6B"; // Electric Coral
+    if (k.includes("CLARITY") || k.includes("WISDOM")) return "#3B82F6"; // Electric Blue
+
+    // Deterministic hash fallback ensuring every single unique emotion gets a distinct color
+    let hash = 0;
+    for (let i = 0; i < k.length; i++) {
+      hash = k.charCodeAt(i) + ((hash << 5) - hash);
     }
+    const colors = ["#10B981", "#A855F7", "#F97316", "#F59E0B", "#EAB308", "#06B6D4", "#0EA5E9", "#6366F1", "#EC4899", "#FF6B6B", "#3B82F6"];
+    return colors[Math.abs(hash) % colors.length];
   };
 
   return (
     <div className="flex flex-col items-center gap-3 w-full">
       <div className="relative flex items-center justify-center my-1">
-        <svg width={size} height={size} className="transform -rotate-90">
+        <svg width={size} height={size} className="transform -rotate-90 filter drop-shadow-md">
           {climate.map((item) => {
             const strokeDasharray = `${(item.percentage / 100) * circumference} ${circumference}`;
             const strokeDashoffset = -currentAngleOffset;
             currentAngleOffset += (item.percentage / 100) * circumference;
             const isSelected = selectedMoodFilter === item.mood;
             const isHovered = hoveredMood?.mood === item.mood;
+            const moodColor = getMoodColorHex(item.mood);
 
             return (
               <circle
@@ -67,11 +73,14 @@ export default function MoodWheel({ climate, selectedMoodFilter, onSelectMoodFil
                 cy={center}
                 r={radius}
                 fill="transparent"
-                stroke={getMoodColorHex(item.mood)}
-                strokeWidth={isSelected || isHovered ? strokeWidth + 4 : strokeWidth}
+                stroke={moodColor}
+                strokeWidth={isSelected || isHovered ? strokeWidth + 5 : strokeWidth}
                 strokeDasharray={strokeDasharray}
                 strokeDashoffset={strokeDashoffset}
-                className="transition-all duration-300 cursor-pointer hover:opacity-100 opacity-85"
+                className="transition-all duration-300 cursor-pointer hover:opacity-100 opacity-90"
+                style={{
+                  filter: isHovered || isSelected ? `drop-shadow(0 0 8px ${moodColor}aa)` : "none"
+                }}
                 onMouseEnter={() => setHoveredMood(item)}
                 onMouseLeave={() => setHoveredMood(null)}
                 onClick={() => {
@@ -89,28 +98,34 @@ export default function MoodWheel({ climate, selectedMoodFilter, onSelectMoodFil
         {/* Center Readout */}
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none px-2">
           {hoveredMood ? (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-              <span className="font-display text-[9px] tracking-wider uppercase block text-neutral-700 dark:text-neutral-200">
+            <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
+              <span
+                className="font-display text-[10px] tracking-wider uppercase block font-bold"
+                style={{ color: getMoodColorHex(hoveredMood.mood) }}
+              >
                 {hoveredMood.mood}
               </span>
-              <span className="font-sans text-[11px] font-semibold text-bronze-light">
+              <span className="font-mono text-xs font-bold text-bronze-light">
                 {hoveredMood.percentage}%
               </span>
             </motion.div>
           ) : selectedMoodFilter ? (
             <div>
-              <span className="font-display text-[9px] tracking-wider uppercase block text-bronze-light">
+              <span
+                className="font-display text-[10px] tracking-wider uppercase block font-bold"
+                style={{ color: getMoodColorHex(selectedMoodFilter) }}
+              >
                 {selectedMoodFilter}
               </span>
               <span className="font-serif text-[10px] italic text-neutral-400">Filter Active</span>
             </div>
           ) : (
             <div>
-              <span className="font-display text-[8px] tracking-[0.2em] uppercase text-neutral-400 block">
+              <span className="font-display text-[8px] tracking-[0.2em] uppercase text-neutral-400 block font-bold">
                 Climate
               </span>
-              <span className="font-serif text-[11px] italic text-neutral-600 dark:text-neutral-300">
-                {climate.length} Moods
+              <span className="font-serif text-[11px] italic theme-text-primary font-semibold">
+                {climate.length} {climate.length === 1 ? "Climate" : "Climates"}
               </span>
             </div>
           )}

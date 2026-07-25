@@ -13,6 +13,7 @@ interface QuoteRevealProps {
   color: string;
   quote: string;
   author: string;
+  reflection?: string;
   themes: string[];
   onSave: (finalQuote: string, finalAuthor: string) => void;
   onRetry: () => void;
@@ -26,6 +27,7 @@ export default function QuoteReveal({
   color,
   quote,
   author,
+  reflection,
   themes,
   onSave,
   onRetry,
@@ -34,6 +36,12 @@ export default function QuoteReveal({
   const [isEditingCustom, setIsEditingCustom] = useState(false);
   const [customQuote, setCustomQuote] = useState(quote);
   const [customAuthor, setCustomAuthor] = useState(author);
+
+  // Sync state when new quote/author props arrive (e.g. on Retry click)
+  React.useEffect(() => {
+    setCustomQuote(quote);
+    setCustomAuthor(author);
+  }, [quote, author]);
 
   // Map desaturated classical colors based on mood color identifiers
   const getColorClasses = (colorName: string) => {
@@ -188,6 +196,17 @@ export default function QuoteReveal({
                       </cite>
                       <span className="w-5 h-[1px] bg-bronze-light/40" />
                     </div>
+
+                    {reflection && (
+                      <div className="mt-6 bg-stone-50/60 dark:bg-stone-900/40 border border-bronze-light/20 rounded-xl p-4 text-center">
+                        <span className="font-display text-[9px] tracking-[0.2em] uppercase text-bronze-light block mb-1">
+                          Oracular Reflection & Takeaway
+                        </span>
+                        <p className="font-serif text-xs italic theme-text-muted leading-relaxed">
+                          "{reflection}"
+                        </p>
+                      </div>
+                    )}
                   </div>
                 )}
 
