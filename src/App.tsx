@@ -203,22 +203,23 @@ export default function App() {
     setIsDark(!isDark);
   };
 
-  // Switch to writing today's entry (uses actual real-time current date)
+  // Switch to writing a fresh new entry for today or a custom date
   const handleBeginWriting = (customDate?: string) => {
     const dateStr = typeof customDate === "string" && customDate.includes("-")
       ? customDate
       : new Date().toISOString().split("T")[0];
     setActiveDate(dateStr);
-    const existing = entries.find((e) => e.date === dateStr);
-    setActiveEntryText(existing ? existing.text : "");
+    setActiveEntryText("");
+    setActiveChapterSubtitle("");
     setAnalysisResult(null);
     setView("write");
   };
 
-  // Start writing for a custom date chosen from the calendar grid
-  const handleSelectDay = (dateString: string, existingText?: string) => {
+  // Start writing for a custom date or editing an existing entry
+  const handleSelectDay = (dateString: string, existingText?: string, existingSubtitle?: string) => {
     setActiveDate(dateString);
     setActiveEntryText(existingText || "");
+    setActiveChapterSubtitle(existingSubtitle || "");
     setAnalysisResult(null);
     setView("write");
   };

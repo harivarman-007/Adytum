@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { BookOpen, Calendar, Sparkles, Trash2, Edit, X, ArrowLeft, ChevronLeft, ChevronRight, Award, Search, Printer, Download, Upload, Compass } from "lucide-react";
+import { BookOpen, Calendar, Sparkles, Trash2, Edit, X, ArrowLeft, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Award, Search, Printer, Download, Upload, Compass } from "lucide-react";
 import { JournalEntry, MonthlyRecap } from "../types";
 import { GreekPillar, LaurelWreath } from "./GreekTempleSVG";
 import { printParchmentEntry, printParchmentRecap } from "../lib/exportParchment";
@@ -840,6 +840,39 @@ export default function MonthArchive({
                   <span className="font-display text-[10px] tracking-widest uppercase text-bronze-light font-bold">
                     Chapters ({selectedDayEntries.length > 0 ? selectedDayEntries.length : 1}):
                   </span>
+
+                  {/* Up / Down Chapter Navigation Arrows */}
+                  {selectedDayEntries.length > 1 && (
+                    <div className="flex items-center gap-1 bg-stone-900/10 dark:bg-stone-100/5 p-0.5 rounded-lg border border-bronze-light/20">
+                      <button
+                        onClick={() => {
+                          playStoneClickSound();
+                          const prevIdx = Math.max(0, selectedChapterIndex - 1);
+                          setSelectedChapterIndex(prevIdx);
+                          setSelectedEntry(selectedDayEntries[prevIdx]);
+                        }}
+                        disabled={selectedChapterIndex === 0}
+                        className="p-1 rounded text-neutral-400 hover:text-bronze-light disabled:opacity-20 transition-colors"
+                        title="Previous Chapter (Up ▲)"
+                      >
+                        <ChevronUp className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          playStoneClickSound();
+                          const nextIdx = Math.min(selectedDayEntries.length - 1, selectedChapterIndex + 1);
+                          setSelectedChapterIndex(nextIdx);
+                          setSelectedEntry(selectedDayEntries[nextIdx]);
+                        }}
+                        disabled={selectedChapterIndex === selectedDayEntries.length - 1}
+                        className="p-1 rounded text-neutral-400 hover:text-bronze-light disabled:opacity-20 transition-colors"
+                        title="Next Chapter (Down ▼)"
+                      >
+                        <ChevronDown className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+
                   {(selectedDayEntries.length > 0 ? selectedDayEntries : [selectedEntry]).map((ch, idx) => (
                     <button
                       key={ch.id}
@@ -866,7 +899,7 @@ export default function MonthArchive({
                     setSelectedEntry(null);
                   }}
                   className="btn-sanctuary px-3 py-1.5 text-[10px] shadow-sm font-bold uppercase tracking-wider flex items-center gap-1.5"
-                  title="Inscribe an additional chapter for today"
+                  title="Inscribe a fresh additional chapter for today"
                 >
                   <Sparkles className="w-3.5 h-3.5 text-bronze-light" />
                   <span>+ Inscribe Next Chapter</span>
