@@ -836,10 +836,32 @@ export default function MonthArchive({
               
               {/* Multi-Chapter Selector Bar */}
               <div className="flex flex-col sm:flex-row items-center justify-between border-b border-bronze-light/20 pb-3 mb-4 gap-3">
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-3 flex-wrap">
                   <span className="font-display text-[10px] tracking-widest uppercase text-bronze-light font-bold">
-                    Chapters ({selectedDayEntries.length > 0 ? selectedDayEntries.length : 1}):
+                    Chapter ({selectedDayEntries.length > 0 ? selectedDayEntries.length : 1}):
                   </span>
+
+                  {/* Clean Dropdown Selection List */}
+                  <select
+                    value={selectedEntry.id}
+                    onChange={(e) => {
+                      playStoneClickSound();
+                      const found = selectedDayEntries.find((ch) => ch.id === e.target.value);
+                      if (found) {
+                        const idx = selectedDayEntries.findIndex((ch) => ch.id === e.target.value);
+                        setSelectedChapterIndex(idx >= 0 ? idx : 0);
+                        setSelectedEntry(found);
+                      }
+                    }}
+                    className="px-3.5 py-1.5 text-xs font-display uppercase tracking-wider rounded-lg border border-bronze-light/40 bg-stone-50/90 dark:bg-neutral-900/90 text-bronze-dark dark:text-bronze-light font-bold focus:outline-none cursor-pointer shadow-sm hover:border-bronze-light transition-colors"
+                    title="Select Chapter to Read"
+                  >
+                    {(selectedDayEntries.length > 0 ? selectedDayEntries : [selectedEntry]).map((ch, idx) => (
+                      <option key={ch.id} value={ch.id} className="bg-stone-100 dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200 font-display font-semibold">
+                        {ch.chapterTitle || `Chapter ${idx + 1}`} {ch.time ? `(${ch.time})` : ""}
+                      </option>
+                    ))}
+                  </select>
 
                   {/* Up / Down Chapter Navigation Arrows */}
                   {selectedDayEntries.length > 1 && (
@@ -872,25 +894,6 @@ export default function MonthArchive({
                       </button>
                     </div>
                   )}
-
-                  {(selectedDayEntries.length > 0 ? selectedDayEntries : [selectedEntry]).map((ch, idx) => (
-                    <button
-                      key={ch.id}
-                      onClick={() => {
-                        playStoneClickSound();
-                        setSelectedChapterIndex(idx);
-                        setSelectedEntry(ch);
-                      }}
-                      className={`px-3 py-1 rounded-lg text-xs font-display uppercase tracking-wider transition-all border ${
-                        selectedEntry.id === ch.id
-                          ? "border-bronze-light bg-bronze-light/25 text-bronze-dark dark:text-bronze-light font-bold shadow-sm"
-                          : "border-bronze-light/20 text-neutral-400 hover:text-bronze-light hover:border-bronze-light/40"
-                      }`}
-                    >
-                      <span>{ch.chapterTitle || `Chapter ${idx + 1}`}</span>
-                      {ch.time && <span className="text-[9px] opacity-75 font-mono ml-1">({ch.time})</span>}
-                    </button>
-                  ))}
                 </div>
 
                 <button
@@ -908,9 +911,14 @@ export default function MonthArchive({
 
               <section className="bas-relief-card greek-frame shadow-2xl p-8 sm:p-12 relative flex flex-col gap-6">
                 <div className="flex justify-between items-center border-b border-bronze-light/10 pb-4">
-                  <span className="font-mono text-xs uppercase tracking-widest text-neutral-500">
-                    {selectedEntry.date}
-                  </span>
+                  <div className="flex flex-col gap-0.5">
+                    <span className="font-mono text-xs uppercase tracking-widest text-neutral-500">
+                      {selectedEntry.date} {selectedEntry.time ? `• ${selectedEntry.time}` : ""}
+                    </span>
+                    <span className="font-display text-sm uppercase tracking-widest text-bronze-dark dark:text-bronze-light font-bold">
+                      {selectedEntry.chapterTitle || "Chapter I"}
+                    </span>
+                  </div>
                   <CameoBadge mood={selectedEntry.mood} moodLabel={selectedEntry.moodLabel} size="md" />
                 </div>
 

@@ -448,7 +448,7 @@ export default function App() {
           onGoToOracle={() => setView("oracle")}
           onGoToBreathing={() => setView("breathing")}
           hasEntries={entries.length > 0}
-          entriesCount={entries.length}
+          entriesCount={new Set(entries.map((e) => e.date)).size}
           currentUser={currentUser}
           onLogout={handleLogout}
         />
