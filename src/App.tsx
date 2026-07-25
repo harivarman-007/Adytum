@@ -46,6 +46,7 @@ export default function App() {
   const [activeDate, setActiveDate] = useState("");
   const [activeEntryText, setActiveEntryText] = useState("");
   const [activeChapterSubtitle, setActiveChapterSubtitle] = useState("");
+  const [lastSavedEntry, setLastSavedEntry] = useState<JournalEntry | null>(null);
   const [analysisResult, setAnalysisResult] = useState<{
     mood: string;
     moodLabel: string;
@@ -348,6 +349,7 @@ export default function App() {
 
     // Append new chapter entry cleanly without overwriting previous entries for the date
     setEntries((prev) => [...prev, newEntry]);
+    setLastSavedEntry(newEntry);
 
     // Async post to backend API
     try {
@@ -499,6 +501,7 @@ export default function App() {
             setEntries(newEntries);
             setSavedRecaps((prev) => ({ ...prev, ...newRecaps }));
           }}
+          initialEntry={lastSavedEntry}
         />
       )}
 

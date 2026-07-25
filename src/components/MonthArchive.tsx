@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { BookOpen, Calendar, Sparkles, Trash2, Edit, X, ArrowLeft, ChevronLeft, ChevronRight, ChevronUp, ChevronDown, Award, Search, Printer, Download, Upload, Compass } from "lucide-react";
 import { JournalEntry, MonthlyRecap } from "../types";
@@ -20,6 +20,7 @@ interface MonthArchiveProps {
   onGoToBreathing?: () => void;
   savedRecaps: Record<string, MonthlyRecap>;
   onImportLedger?: (entries: JournalEntry[], recaps: Record<string, MonthlyRecap>) => void;
+  initialEntry?: JournalEntry | null;
 }
 
 // Translate month key "YYYY-MM" to readable "Month Year"
@@ -60,6 +61,7 @@ export default function MonthArchive({
   onGoToBreathing,
   savedRecaps,
   onImportLedger,
+  initialEntry
 }: MonthArchiveProps) {
   // Derive unique months from all entries
   const months = Array.from(
@@ -70,11 +72,30 @@ export default function MonthArchive({
   const currentMonthKey = new Date().toISOString().substring(0, 7);
 
   const [selectedMonthStr, setSelectedMonthStr] = useState<string | null>(() => {
-    return months[0] || currentMonthKey;
+    return initialEntry ? initialEntry.date.substring(0, 7) : (months[0] || currentMonthKey);
   });
-  const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(null);
-  const [selectedDayEntries, setSelectedDayEntries] = useState<JournalEntry[]>([]);
-  const [selectedChapterIndex, setSelectedChapterIndex] = useState(0);
+  const [selectedEntry, setSelectedEntry] = useState<JournalEntry | null>(initialEntry || null);
+  const [selectedDayEntries, setSelectedDayEntries] = useState<JournalEntry[]>(() => {
+    return initialEntry ? entries.filter((e) => e.date === initialEntry.date) : [];
+  });
+  const [selectedChapterIndex, setSelectedChapterIndex] = useState(() => {
+    if (!initialEntry) return 0;
+    const dayEntries = entries.filter((e) => e.date === initialEntry.date);
+    const idx = dayEntries.findIndex((e) => e.id === initialEntry.id);
+    return idx >= 0 ? idx : 0;
+  });
+
+  useEffect(() => {
+    if (initialEntry) {
+      const dayEntries = entries.filter((e) => e.date === initialEntry.date);
+      const chapterIdx = dayEntries.findIndex((e) => e.id === initialEntry.id);
+      setSelectedMonthStr(initialEntry.date.substring(0, 7));
+      setSelectedDayEntries(dayEntries.length > 0 ? dayEntries : [initialEntry]);
+      setSelectedChapterIndex(chapterIdx >= 0 ? chapterIdx : 0);
+      setSelectedEntry(initialEntry);
+    }
+  }, [initialEntry]);
+
   const [readingStoryIndex, setReadingStoryIndex] = useState(0);
   const [selectedMoodFilter, setSelectedMoodFilter] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
